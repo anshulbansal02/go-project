@@ -1,8 +1,10 @@
 package websockets
 
 import (
+	"anshulbansal02/scribbly/pkg/utils"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/gorilla/websocket"
 )
@@ -18,7 +20,7 @@ type WebSocketEvent struct {
 type Client struct {
 	ID        string
 	socket    *websocket.Conn
-	receivers []func(event WebSocketEvent)
+	listeners []func(event WebSocketEvent)
 }
 
 // Send string message over to websocket client
@@ -28,17 +30,7 @@ func (c *Client) Send(message string) error {
 
 // Register a functional handler for an event on the client
 func (c *Client) On(event string, handler func(event WebSocketEvent)) {
-	c.receivers = append(c.receivers, handler)
-}
-
-// Process a single client websocket emitted message
-func (c *Client) processMessage(mt int, msg []byte) {
-	for _, handler := range c.receivers {
-		handler(WebSocketEvent{
-			Name:    "Message",
-			Message: string(msg),
-		})
-	}
+	c.listeners = append(c.listeners, handler)
 }
 
 /* --------------- CLIENT POOL ---------------- */
@@ -61,13 +53,14 @@ func (cp *clientPool) closeAndRemove(c *Client) {
 
 /* --------------- WEBSOCKET MANAGER ---------------- */
 
-type webSocketManager struct {
+type WebSocketManager struct {
 	clientPool   clientPool
 	connUpgrader websocket.Upgrader
+	listeners    []func(client *Client, event WebSocketEvent)
 }
 
-func NewWebSocketManager() *webSocketManager {
-	return &webSocketManager{
+func NewWebSocketManager() *WebSocketManager {
+	return &WebSocketManager{
 		clientPool: clientPool{
 			clients: make(map[string]*Client),
 		},
@@ -82,8 +75,10 @@ func NewWebSocketManager() *webSocketManager {
 	}
 }
 
+var generateClientId = utils.NewRandomStringGenerator(nil, 8)
+
 // Upgrade an HTTP connection to WebSocket one
-func (m *webSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Request) {
+func (m *WebSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Request) {
 	conn, err := m.connUpgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -91,7 +86,7 @@ func (m *webSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	client := &Client{ID: "", socket: conn}
+	client := &Client{ID: generateClientId(), socket: conn}
 	m.clientPool.addNew(client)
 
 	go m.readLoop(client)
@@ -99,7 +94,7 @@ func (m *webSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Req
 }
 
 // Poll for messages from websocket clients
-func (m *webSocketManager) readLoop(client *Client) {
+func (m *WebSocketManager) readLoop(client *Client) {
 	defer m.clientPool.closeAndRemove(client)
 	for {
 		mt, msgBytes, err := client.socket.ReadMessage()
@@ -108,6 +103,50 @@ func (m *webSocketManager) readLoop(client *Client) {
 			fmt.Println("ReadLoop Error: ", err)
 		}
 
-		go client.processMessage(mt, msgBytes)
+		go m.processMessage(client, mt, msgBytes)
+	}
+}
+
+// Process a single client websocket emitted message
+func (m *WebSocketManager) processMessage(client *Client, mt int, msg []byte) {
+	// Extract event name from msg
+
+	for _, handler := range m.listeners {
+		handler(client, WebSocketEvent{
+			Name:    "Message",
+			Message: string(msg),
+		})
+	}
+
+	for _, handler := range client.listeners {
+		handler(WebSocketEvent{
+			Name:    "Message",
+			Message: string(msg),
+		})
+	}
+
+}
+
+func (m *WebSocketManager) GetClient(clientId string) *Client {
+	return m.clientPool.clients[clientId]
+}
+
+func (m *WebSocketManager) Send(clientId, message string) {
+	m.GetClient(clientId).Send(message)
+}
+
+// Register a functional handler for an event on the manager for all clients
+func (m *WebSocketManager) OnEvent(event string, handler func(client *Client, event WebSocketEvent)) {
+	m.listeners = append(m.listeners, handler)
+}
+
+func (m *WebSocketManager) Multicast(clientIds []string, exceptIds []string, message string) {
+	for _, clientId := range clientIds {
+		if slices.Contains(exceptIds, clientId) {
+			continue
+		}
+
+		m.GetClient(clientId).Send(message)
+
 	}
 }

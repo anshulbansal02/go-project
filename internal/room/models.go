@@ -13,3 +13,18 @@ type Room struct {
 func GetNamespaceKey(roomId string) string {
 	return fmt.Sprintf("entity:room:%v", roomId)
 }
+
+type EventType int
+
+type UserEvent struct {
+	Type   EventType
+	UserId string
+	RoomId string
+}
+
+const (
+	JoinRequestEvent EventType = iota
+	CancelJoinRequestEvent
+	UserJoinEvent
+	UserLeaveEvent
+)

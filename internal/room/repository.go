@@ -22,13 +22,12 @@ var generateRoomId = utils.NewRandomStringGenerator(nil, 8)
 var generateRoomCode = utils.NewRandomStringGenerator(&utils.CHARSET_ALPHA_NUM, 6)
 
 // Create a new unsaved room
-func (m *RoomRepository) NewRoom(adminId *string, participants []string, roomType string) *Room {
+func (m *RoomRepository) NewRoom(adminId *string, roomType string) *Room {
 	return &Room{
-		ID:           generateRoomId(),
-		Code:         generateRoomCode(),
-		Type:         roomType,
-		Participants: participants,
-		Admin:        adminId,
+		ID:    generateRoomId(),
+		Code:  generateRoomCode(),
+		Type:  roomType,
+		Admin: adminId,
 	}
 }
 
@@ -56,6 +55,16 @@ func (m *RoomRepository) GetRoom(ctx context.Context, roomId string) (*Room, err
 	}
 
 	return &room, nil
+}
+
+func (m *RoomRepository) RoomExists(ctx context.Context, roomId string) (bool, error) {
+	exists, err := m.Rdb.Exists(ctx, GetNamespaceKey(roomId)).Result()
+	return exists > 0, err
+}
+
+func (m *RoomRepository) DeleteRoom(ctx context.Context, roomId string) error {
+	err := m.Rdb.Del(ctx, GetNamespaceKey(roomId)).Err()
+	return err
 }
 
 // Lock roomId for mutex
