@@ -1,7 +1,9 @@
 package user
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
-	ErrUserNotFound = errors.New("User not found")
+	ErrUserNotFound = errors.New("user not found")
 )

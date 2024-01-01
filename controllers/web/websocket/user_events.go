@@ -1,5 +1,0 @@
-package exchange
-
-func Setup() {
-
-}

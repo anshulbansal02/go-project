@@ -28,14 +28,14 @@ func (e *RoomEventsExchange) Listen() {
 			event := <-e.roomService.UserEventsChannel
 
 			switch event.Type {
-			case room.JoinRequestEvent:
+			case room.JoinRequestedEvent:
 				go e.handleIE_JoinRequest(event.UserId, event.RoomId)
-			case room.CancelJoinRequestEvent:
+			case room.JoinRequestCancelledEvent:
 				go e.handleIE_CancelRequest(event.UserId, event.RoomId)
-			case room.UserJoinEvent:
-				go e.handleIE_RoomJoined(event.UserId, event.RoomId)
-			case room.UserLeaveEvent:
-				go e.handleIE_RoomLeft(event.UserId, event.RoomId)
+			case room.UserJoinedEvent:
+				go e.handleIE_UserJoined(event.UserId, event.RoomId)
+			case room.UserLeftEvent:
+				go e.handleIE_UserLeft(event.UserId, event.RoomId)
 			}
 
 		}
@@ -65,7 +65,7 @@ func (e *RoomEventsExchange) handleIE_CancelRequest(userId, roomId string) {
 	}
 }
 
-func (e *RoomEventsExchange) handleIE_RoomLeft(userId, roomId string) {
+func (e *RoomEventsExchange) handleIE_UserLeft(userId, roomId string) {
 	userIds, err := e.roomService.GetRoomUsers(context.Background(), roomId)
 	if err != nil {
 		return
@@ -75,7 +75,7 @@ func (e *RoomEventsExchange) handleIE_RoomLeft(userId, roomId string) {
 
 }
 
-func (e *RoomEventsExchange) handleIE_RoomJoined(userId, roomId string) {
+func (e *RoomEventsExchange) handleIE_UserJoined(userId, roomId string) {
 	userIds, err := e.roomService.GetRoomUsers(context.Background(), roomId)
 	if err != nil {
 		return

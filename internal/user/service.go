@@ -20,7 +20,8 @@ func NewService(userRepo *UserRepository) *UserService {
 func (s *UserService) CreateUser(ctx context.Context, name string) (*User, error) {
 	user := s.userRepo.NewUser(name)
 
-	if err := s.userRepo.SaveUser(ctx, user); err != nil {
+	err := s.userRepo.SaveUser(ctx, user)
+	if err != nil {
 		return nil, err
 	}
 
@@ -30,14 +31,12 @@ func (s *UserService) CreateUser(ctx context.Context, name string) (*User, error
 // Get a user by its Id
 func (s *UserService) GetUser(ctx context.Context, userId string) (*User, error) {
 	user, err := s.userRepo.GetUser(ctx, userId)
-
 	return user, err
 }
 
 // Delete a user by its Id
 func (s *UserService) DeleteUser(ctx context.Context, userId string) error {
 	err := s.userRepo.DeleteUser(ctx, userId)
-
 	return err
 }
 
@@ -46,7 +45,6 @@ func (s *UserService) UpdateUserName(ctx context.Context, userId string, newName
 	defer s.userRepo.LockKey(userId)()
 
 	user, err := s.userRepo.GetUser(ctx, userId)
-
 	if err != nil {
 		return err
 	}
@@ -55,5 +53,4 @@ func (s *UserService) UpdateUserName(ctx context.Context, userId string, newName
 	err = s.userRepo.SaveUser(ctx, user)
 
 	return err
-
 }

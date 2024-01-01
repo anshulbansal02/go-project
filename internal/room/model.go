@@ -11,11 +11,11 @@ type Room struct {
 type EventType int
 
 const (
-	JoinRequestEvent EventType = iota
+	JoinRequestedEvent EventType = iota
 	JoinRequestRejectedEvent
-	CancelJoinRequestEvent
-	UserJoinEvent
-	UserLeaveEvent
+	JoinRequestCancelledEvent
+	UserJoinedEvent
+	UserLeftEvent
 )
 
 type UserEvent struct {

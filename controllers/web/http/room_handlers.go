@@ -8,6 +8,7 @@ import (
 )
 
 type roomHttpControllers struct {
+	BaseHandler
 	roomService room.RoomService
 	router      chi.Router
 }
@@ -27,11 +28,21 @@ func (h *roomHttpControllers) Routes() chi.Router {
 
 	h.router.Get("/{roomId}", func(w http.ResponseWriter, r *http.Request) {
 		// Get room by id
+
+		roomId := chi.URLParam(r, "roomId")
+
+		room, err := h.roomService.GetRoom(r.Context(), roomId)
+
+		if err != nil {
+		}
+
+		h.JSON(w, http.StatusOK, room)
+
 	})
 
 	h.router.Post("/join/{roomId}", func(w http.ResponseWriter, r *http.Request) {
 		// Create request to join room
-		h.roomService.CreateRoomJoiningRequest(r.Context(), "", "")
+		h.roomService.CreateJoinRequest(r.Context(), "", "")
 	})
 
 	h.router.Delete("/join", func(w http.ResponseWriter, r *http.Request) {

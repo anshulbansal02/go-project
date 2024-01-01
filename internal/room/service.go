@@ -85,7 +85,7 @@ func (s *RoomService) GetRoomAdmin(ctx context.Context, roomId string) *string {
 	return room.Admin
 }
 
-func (s *RoomService) CreateRoomJoiningRequest(ctx context.Context, roomId string, userId string) error {
+func (s *RoomService) CreateJoinRequest(ctx context.Context, roomId string, userId string) error {
 
 	defer s.roomRepo.LockKey(roomId)()
 
@@ -115,7 +115,7 @@ func (s *RoomService) CreateRoomJoiningRequest(ctx context.Context, roomId strin
 
 	// Send request to room user events channel
 	s.UserEventsChannel <- UserEvent{
-		Type:   JoinRequestEvent,
+		Type:   JoinRequestedEvent,
 		UserId: userId,
 		RoomId: roomId,
 	}
@@ -124,6 +124,75 @@ func (s *RoomService) CreateRoomJoiningRequest(ctx context.Context, roomId strin
 
 }
 
-func (s *RoomService) CancelJoinRequest(ctx context.Context, userId string) {
+func (s *RoomService) CancelJoinRequest(ctx context.Context, userId string) error {
+	//Assuming delete only happens if request exists
 
+	roomId, err := s.joinRequests.GetUserJoinRequestedRoom(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	err = s.joinRequests.DeleteJoinRequest(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	s.UserEventsChannel <- UserEvent{
+		Type:   JoinRequestCancelledEvent,
+		UserId: userId,
+		RoomId: roomId,
+	}
+
+	return nil
+}
+
+func (s *RoomService) RejectJoinRequest(ctx context.Context, userId string) error {
+	// delete request entity and send channel event
+
+	roomId, err := s.joinRequests.GetUserJoinRequestedRoom(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	err = s.joinRequests.DeleteJoinRequest(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	s.UserEventsChannel <- UserEvent{
+		Type:   JoinRequestRejectedEvent,
+		UserId: userId,
+		RoomId: roomId,
+	}
+
+	return nil
+}
+
+func (s *RoomService) AcceptJoinRequest(ctx context.Context, userId string) error {
+	// delete request entity, add user to room and send channel event
+
+	roomId, err := s.joinRequests.GetUserJoinRequestedRoom(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	defer s.roomRepo.LockKey(roomId)()
+
+	err = s.joinRequests.DeleteJoinRequest(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	err = s.userRoomRelation.AddUserToRoom(ctx, roomId, userId)
+	if err != nil {
+		return err
+	}
+
+	s.UserEventsChannel <- UserEvent{
+		Type:   UserJoinedEvent,
+		UserId: userId,
+		RoomId: roomId,
+	}
+
+	return nil
 }

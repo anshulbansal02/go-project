@@ -42,26 +42,32 @@ func (m *UserRepository) SaveUser(ctx context.Context, user *User) error {
 
 	u, err := json.Marshal(user)
 	if err != nil {
-		return fmt.Errorf("SaveUser: %w", err)
+		return fmt.Errorf("user repository: %w", err)
 	}
 
-	return m.Rdb.Set(ctx, getNamespaceKey(user.ID), u, 0).Err()
+	err = m.Rdb.Set(ctx, getNamespaceKey(user.ID), u, 0).Err()
+	if err != nil {
+		return fmt.Errorf("user repository: %w", err)
+	}
+
+	return nil
 }
 
 // Get user by ID
 func (m *UserRepository) GetUser(ctx context.Context, userId string) (*User, error) {
 	u, err := m.Rdb.Get(ctx, getNamespaceKey(userId)).Result()
 
-	if errors.Is(err, redis.Nil) {
-		return nil, ErrUserNotFound
-	} else if err != nil {
-		return nil, fmt.Errorf("GetUser: %w", err)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("user respository: %w", err)
 	}
 
 	user := &User{}
 	err = json.Unmarshal([]byte(u), user)
 	if err != nil {
-		return nil, fmt.Errorf("GetUser: %w", err)
+		return nil, fmt.Errorf("user respository: %w", err)
 	}
 
 	return user, nil
@@ -69,9 +75,12 @@ func (m *UserRepository) GetUser(ctx context.Context, userId string) (*User, err
 
 // Delete user by ID
 func (m *UserRepository) DeleteUser(ctx context.Context, userId string) error {
-	_, err := m.Rdb.Del(ctx, userId).Result()
+	err := m.Rdb.Del(ctx, userId).Err()
+	if err != nil {
+		return fmt.Errorf("user repository: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (m *UserRepository) LockKey(userId string) func() {
