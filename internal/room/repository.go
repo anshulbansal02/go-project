@@ -5,6 +5,7 @@ import (
 	"anshulbansal02/scribbly/pkg/utils"
 	"context"
 	"encoding/json"
+	"fmt"
 )
 
 type RoomRepository struct {
@@ -18,8 +19,16 @@ func NewRepository(repo repository.Repository) *RoomRepository {
 	}
 }
 
+/********************** Helper Functions **********************/
+
 var generateRoomId = utils.NewRandomStringGenerator(nil, 8)
 var generateRoomCode = utils.NewRandomStringGenerator(&utils.CHARSET_ALPHA_NUM, 6)
+
+func GetNamespaceKey(roomId string) string {
+	return fmt.Sprintf("entity:room:%v", roomId)
+}
+
+/********************** Repository Methods **********************/
 
 // Create a new unsaved room
 func (m *RoomRepository) NewRoom(adminId *string, roomType string) *Room {

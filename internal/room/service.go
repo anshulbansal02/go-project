@@ -1,19 +1,24 @@
 package room
 
 import (
-	roomuser "anshulbansal02/scribbly/internal/room/aggregates/room_user"
+	aggJoinRequest "anshulbansal02/scribbly/internal/room/aggregates/user_join_request"
+	aggUserRoom "anshulbansal02/scribbly/internal/room/aggregates/user_room_relation"
 	"context"
 )
 
 type RoomService struct {
 	roomRepo         *RoomRepository
-	userRoomRelation *roomuser.UserRoomRelationRepository
-	joinRequests     *roomuser.UserJoinRequestRepository
+	userRoomRelation *aggUserRoom.UserRoomRelationRepository
+	joinRequests     *aggJoinRequest.UserJoinRequestRepository
 
 	UserEventsChannel chan UserEvent
 }
 
-func NewService(roomRepo *RoomRepository, userRoomRelation *roomuser.UserRoomRelationRepository, joinRequestsRepo *roomuser.UserJoinRequestRepository) *RoomService {
+func NewService(
+	roomRepo *RoomRepository,
+	userRoomRelation *aggUserRoom.UserRoomRelationRepository,
+	joinRequestsRepo *aggJoinRequest.UserJoinRequestRepository,
+) *RoomService {
 	return &RoomService{
 		roomRepo:         roomRepo,
 		userRoomRelation: userRoomRelation,
@@ -23,7 +28,8 @@ func NewService(roomRepo *RoomRepository, userRoomRelation *roomuser.UserRoomRel
 	}
 }
 
-// // User Service Methods
+/********************** Service Methods **********************/
+
 func (s *RoomService) CreatePrivateRoom(ctx context.Context, adminId string) (*Room, error) {
 
 	room := s.roomRepo.NewRoom(&adminId, "private")

@@ -3,6 +3,6 @@ package room
 import "errors"
 
 var (
-	ErrRoomNotFound      = errors.New("Room not found")
-	ErrUserAlreadyInRoom = errors.New("User is already in another room")
+	ErrRoomNotFound      = errors.New("room not found")
+	ErrUserAlreadyInRoom = errors.New("user is already in another room")
 )

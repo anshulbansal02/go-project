@@ -14,7 +14,7 @@ func NewService(userRepo *UserRepository) *UserService {
 	}
 }
 
-//// User Service Methods
+/********************** Service Methods **********************/
 
 // Create a user using name
 func (s *UserService) CreateUser(ctx context.Context, name string) (*User, error) {

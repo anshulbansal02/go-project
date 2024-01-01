@@ -1,4 +1,4 @@
-package roomuser
+package roomaggregates
 
 type JoinRequest struct {
 	UserId string

@@ -22,7 +22,15 @@ func NewRepository(repo repository.Repository) *UserRepository {
 	}
 }
 
+/********************** Helper Functions **********************/
+
 var generateUserId = utils.NewRandomStringGenerator(nil, 12)
+
+func getNamespaceKey(userId string) string {
+	return fmt.Sprintf("entity:user:%v", userId)
+}
+
+/********************** Repository Methods **********************/
 
 // Create a new unsaved user
 func (m *UserRepository) NewUser(name string) *User {

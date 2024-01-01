@@ -1,4 +1,4 @@
-package roomuser
+package roomaggregates
 
 import (
 	"anshulbansal02/scribbly/internal/repository"
