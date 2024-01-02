@@ -32,13 +32,13 @@ func main() {
 	roomService.SetDependencies(room.DependingServices{
 		UserService: userService,
 	})
-	// chatService := chat.NewService(chat.NewRepository(*repository))
 
 	// Http Controllers Initialization
 	rootRouter.Mount("/", web.SetupHealthcheckHttpControllers().Routes())
 	rootRouter.Mount("/users", web.SetupUserHttpControllers(*userService).Routes())
 	rootRouter.Mount("/rooms", web.SetupRoomHttpControllers(*roomService).Routes())
-	// rootRouter.Mount("/chat", web.SetupChatHttpControllers(*chatService).Routes)
+
+	rootRouter.Get("/client", wsManager.HandleWSConnection)
 
 	// Events Exchange Setup
 	exchange.NewRoomEventsExchange(roomService, wsManager).Listen()

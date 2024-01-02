@@ -14,45 +14,6 @@ type WebSocketEvent struct {
 	Message string
 }
 
-/* --------------- CLIENT ---------------- */
-
-// Represents a websocket connection
-type Client struct {
-	ID        string
-	socket    *websocket.Conn
-	listeners []func(event WebSocketEvent)
-}
-
-// Send string message over to websocket client
-func (c *Client) Send(message string) error {
-	return c.socket.WriteMessage(websocket.TextMessage, []byte(message))
-}
-
-// Register a functional handler for an event on the client
-func (c *Client) On(event string, handler func(event WebSocketEvent)) {
-	c.listeners = append(c.listeners, handler)
-}
-
-/* --------------- CLIENT POOL ---------------- */
-
-// Stores all the websocket connections
-type clientPool struct {
-	clients map[string]*Client
-}
-
-// Add a new client to clients pool
-func (cp *clientPool) addNew(c *Client) {
-	cp.clients[c.ID] = c
-}
-
-// Close websocket client connection and remove from clients pool
-func (cp *clientPool) closeAndRemove(c *Client) {
-	delete(cp.clients, c.ID)
-	c.socket.Close()
-}
-
-/* --------------- WEBSOCKET MANAGER ---------------- */
-
 type WebSocketManager struct {
 	clientPool   clientPool
 	connUpgrader websocket.Upgrader
@@ -137,6 +98,7 @@ func (m *WebSocketManager) Send(clientId, message string) {
 
 // Register a functional handler for an event on the manager for all clients
 func (m *WebSocketManager) OnEvent(event string, handler func(client *Client, event WebSocketEvent)) {
+
 	m.listeners = append(m.listeners, handler)
 }
 
