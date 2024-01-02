@@ -2,6 +2,9 @@ package web
 
 import (
 	"anshulbansal02/scribbly/internal/room"
+	"anshulbansal02/scribbly/internal/user"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -24,20 +27,38 @@ func (h *roomHttpControllers) Routes() chi.Router {
 
 	h.router.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		// Create new room only if there exists a user client
+		var body struct {
+			AdminId string `json:"adminId"`
+		}
+		err := h.DecodeBodyTo(r, &body)
+		if err != nil {
+			h.JSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		room, err := h.roomService.CreatePrivateRoom(r.Context(), body.AdminId)
+		fmt.Println(err)
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				h.JSON(w, http.StatusBadRequest, err.Error())
+			}
+			h.JSON(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		h.JSON(w, http.StatusCreated, room)
 	})
 
 	h.router.Get("/{roomId}", func(w http.ResponseWriter, r *http.Request) {
-		// Get room by id
-
 		roomId := chi.URLParam(r, "roomId")
 
 		room, err := h.roomService.GetRoom(r.Context(), roomId)
-
 		if err != nil {
+			h.JSON(w, http.StatusInternalServerError, err)
+			return
 		}
 
 		h.JSON(w, http.StatusOK, room)
-
 	})
 
 	h.router.Post("/join/{roomId}", func(w http.ResponseWriter, r *http.Request) {

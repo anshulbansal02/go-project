@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -14,13 +15,12 @@ func (h *BaseHandler) JSON(w http.ResponseWriter, statusCode int, data any) {
 	json, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Server Error"))
+		w.Write([]byte(fmt.Sprint("Server Error: %w", err)))
 		return
 	}
 
 	w.WriteHeader(statusCode)
 	w.Write(json)
-
 }
 
 func (h *BaseHandler) DecodeBodyTo(r *http.Request, v any) error {

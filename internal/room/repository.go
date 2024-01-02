@@ -5,33 +5,25 @@ import (
 	"anshulbansal02/scribbly/pkg/utils"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type RoomRepository struct {
 	repository.Repository
-	keyMutex utils.KeyMutex
-}
-
-func NewRepository(repo repository.Repository) *RoomRepository {
-	return &RoomRepository{
-		Repository: repo,
-	}
-}
-
-/********************** Helper Functions **********************/
-
-var generateRoomId = utils.NewRandomStringGenerator(nil, 8)
-var generateRoomCode = utils.NewRandomStringGenerator(&utils.CHARSET_ALPHA_NUM, 6)
-
-func GetNamespaceKey(roomId string) string {
-	return fmt.Sprintf("entity:room:%v", roomId)
+	KeyMutex utils.KeyMutex
 }
 
 /********************** Repository Methods **********************/
 
+func (r *RoomRepository) error(err error) error {
+	return fmt.Errorf("room repository: %w", err)
+}
+
 // Create a new unsaved room
-func (m *RoomRepository) NewRoom(adminId *string, roomType string) *Room {
+func (r *RoomRepository) NewRoom(adminId *string, roomType string) *Room {
 	return &Room{
 		ID:    generateRoomId(),
 		Code:  generateRoomCode(),
@@ -41,42 +33,51 @@ func (m *RoomRepository) NewRoom(adminId *string, roomType string) *Room {
 }
 
 // Save room to repository
-func (m *RoomRepository) SaveRoom(ctx context.Context, room *Room) error {
+func (r *RoomRepository) SaveRoom(ctx context.Context, room *Room) error {
 	u, err := json.Marshal(room)
 	if err != nil {
-		return err
+		return r.error(err)
 	}
 
-	return m.Rdb.Set(ctx, GetNamespaceKey(room.ID), u, 0).Err()
+	err = r.Rdb.Set(ctx, GetNamespaceKey(room.ID), u, 0).Err()
+
+	return r.error(err)
 }
 
 // Get room by ID
-func (m *RoomRepository) GetRoom(ctx context.Context, roomId string) (*Room, error) {
-	r, err := m.Rdb.Get(ctx, GetNamespaceKey(roomId)).Result()
+func (r *RoomRepository) GetRoom(ctx context.Context, roomId string) (*Room, error) {
+	k, err := r.Rdb.Get(ctx, GetNamespaceKey(roomId)).Result()
 	if err != nil {
-		return nil, ErrRoomNotFound
+		return nil, r.error(ErrRoomNotFound)
 	}
 
-	room := Room{}
-	err = json.Unmarshal([]byte(r), &room)
+	room := &Room{}
+	err = json.Unmarshal([]byte(k), room)
 	if err != nil {
-		return nil, err
+		return nil, r.error(err)
 	}
 
-	return &room, nil
+	return room, nil
 }
 
-func (m *RoomRepository) RoomExists(ctx context.Context, roomId string) (bool, error) {
-	exists, err := m.Rdb.Exists(ctx, GetNamespaceKey(roomId)).Result()
-	return exists > 0, err
+func (r *RoomRepository) RoomExists(ctx context.Context, roomId string) (bool, error) {
+	exists, err := r.Rdb.Exists(ctx, GetNamespaceKey(roomId)).Result()
+
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return false, nil
+		}
+		return false, r.error(err)
+	}
+
+	return exists > 0, nil
 }
 
-func (m *RoomRepository) DeleteRoom(ctx context.Context, roomId string) error {
-	err := m.Rdb.Del(ctx, GetNamespaceKey(roomId)).Err()
-	return err
-}
+func (r *RoomRepository) DeleteRoom(ctx context.Context, roomId string) error {
+	err := r.Rdb.Del(ctx, GetNamespaceKey(roomId)).Err()
+	if err != nil {
+		return r.error(err)
+	}
 
-// Lock roomId for mutex
-func (m *RoomRepository) LockKey(roomId string) func() {
-	return m.keyMutex.Lock(roomId)
+	return nil
 }

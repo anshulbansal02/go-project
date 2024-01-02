@@ -28,10 +28,11 @@ func main() {
 
 	// Services Initialization
 	userService := user.SetupConcreteService(*repository)
-	roomService := room.SetupConcreteService(*repository)
+	roomService := room.SetupConcreteService(*repository, userService)
 	// chatService := chat.NewService(chat.NewRepository(*repository))
 
 	// Http Controllers Initialization
+	rootRouter.Mount("/", web.SetupHealthcheckHttpControllers().Routes())
 	rootRouter.Mount("/users", web.SetupUserHttpControllers(*userService).Routes())
 	rootRouter.Mount("/rooms", web.SetupRoomHttpControllers(*roomService).Routes())
 	// rootRouter.Mount("/chat", web.SetupChatHttpControllers(*chatService).Routes)

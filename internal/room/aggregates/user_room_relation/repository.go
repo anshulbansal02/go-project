@@ -12,28 +12,24 @@ type UserRoomRelationRepository struct {
 	repository.Repository
 }
 
-func NewUserRoomRelation(repository repository.Repository) *UserRoomRelationRepository {
-	return &UserRoomRelationRepository{
-		Repository: repository,
-	}
-}
-
-func getUserToRoomRelationKey() string {
-	return "relation:user->room"
-}
-
-func getRoomToUsersRelationKey(roomId string) string {
-	return fmt.Sprintf("relation:room->users:%v", roomId)
+func (m *UserRoomRelationRepository) error(err error) error {
+	return fmt.Errorf("user room relation repository: %w", err)
 }
 
 func (r *UserRoomRelationRepository) GetRoomIdByUserId(ctx context.Context, userId string) (string, error) {
 	roomId, err := r.Rdb.HGet(ctx, getUserToRoomRelationKey(), userId).Result()
-	return roomId, err
+	if err != nil {
+		return "", r.error(err)
+	}
+	return roomId, nil
 }
 
 func (r *UserRoomRelationRepository) GetUsersByRoomId(ctx context.Context, roomId string) ([]string, error) {
 	users, err := r.Rdb.SMembers(ctx, getRoomToUsersRelationKey(roomId)).Result()
-	return users, err
+	if err != nil {
+		return []string{}, r.error(err)
+	}
+	return users, nil
 }
 
 func (r *UserRoomRelationRepository) AddUserToRoom(ctx context.Context, roomId string, userId string) error {
@@ -41,7 +37,7 @@ func (r *UserRoomRelationRepository) AddUserToRoom(ctx context.Context, roomId s
 	roomKey := getRoomToUsersRelationKey(roomId)
 	userKey := getUserToRoomRelationKey()
 
-	return r.Rdb.Watch(ctx, func(tx *redis.Tx) error {
+	err := r.Rdb.Watch(ctx, func(tx *redis.Tx) error {
 
 		pipe := tx.Pipeline()
 
@@ -53,6 +49,11 @@ func (r *UserRoomRelationRepository) AddUserToRoom(ctx context.Context, roomId s
 		return err
 
 	}, userKey, roomKey)
+
+	if err != nil {
+		return r.error(err)
+	}
+	return nil
 }
 
 func (r *UserRoomRelationRepository) RemoveUserFromRoom(ctx context.Context, roomId string, userId string) error {
@@ -60,7 +61,7 @@ func (r *UserRoomRelationRepository) RemoveUserFromRoom(ctx context.Context, roo
 	roomKey := getRoomToUsersRelationKey(roomId)
 	userKey := getUserToRoomRelationKey()
 
-	return r.Rdb.Watch(ctx, func(tx *redis.Tx) error {
+	err := r.Rdb.Watch(ctx, func(tx *redis.Tx) error {
 
 		pipe := tx.Pipeline()
 
@@ -73,4 +74,8 @@ func (r *UserRoomRelationRepository) RemoveUserFromRoom(ctx context.Context, roo
 
 	}, userKey, roomKey)
 
+	if err != nil {
+		return r.error(err)
+	}
+	return nil
 }

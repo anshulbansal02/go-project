@@ -8,12 +8,6 @@ type UserService struct {
 	userRepo *UserRepository
 }
 
-func NewService(userRepo *UserRepository) *UserService {
-	return &UserService{
-		userRepo: userRepo,
-	}
-}
-
 /********************** Service Methods **********************/
 
 // Create a user using name
@@ -42,7 +36,7 @@ func (s *UserService) DeleteUser(ctx context.Context, userId string) error {
 
 // Upadte name of a user by its Id
 func (s *UserService) UpdateUserName(ctx context.Context, userId string, newName string) error {
-	defer s.userRepo.LockKey(userId)()
+	defer s.userRepo.KeyMutex.Lock(userId)()
 
 	user, err := s.userRepo.GetUser(ctx, userId)
 	if err != nil {
@@ -53,4 +47,13 @@ func (s *UserService) UpdateUserName(ctx context.Context, userId string, newName
 	err = s.userRepo.SaveUser(ctx, user)
 
 	return err
+}
+
+func (s *UserService) UserExists(ctx context.Context, userId string) (bool, error) {
+	exists, err := s.userRepo.UserExists(ctx, userId)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }

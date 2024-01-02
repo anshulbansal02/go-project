@@ -4,8 +4,8 @@ type Room struct {
 	ID           string   `json:"id"`
 	Code         string   `json:"code"`
 	Type         string   `json:"type"`
-	Participants []string `json:"participants_ids"`
-	Admin        *string  `json:"admin_id"`
+	Participants []string `json:"participantIds"`
+	Admin        *string  `json:"adminId"`
 }
 
 type EventType int
