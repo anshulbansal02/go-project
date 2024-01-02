@@ -10,12 +10,16 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RoomService struct {
-	roomRepo         *RoomRepository
-	userRoomRelation *aggUserRoom.UserRoomRelationRepository
-	joinRequests     *aggJoinRequest.UserJoinRequestRepository
+type DependingServices struct {
+	UserService *user.UserService
+}
 
-	userService *user.UserService
+type RoomService struct {
+	roomRepo             *RoomRepository
+	userRoomRelationRepo *aggUserRoom.UserRoomRelationRepository
+	joinRequestsRepo     *aggJoinRequest.UserJoinRequestRepository
+
+	DependingServices
 
 	UserEventsChannel chan UserEvent
 }
@@ -23,7 +27,7 @@ type RoomService struct {
 /********************** Service Methods **********************/
 
 func (s *RoomService) CreatePrivateRoom(ctx context.Context, adminId string) (*Room, error) {
-	adminExists, err := s.userService.UserExists(ctx, adminId)
+	adminExists, err := s.UserService.UserExists(ctx, adminId)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +35,7 @@ func (s *RoomService) CreatePrivateRoom(ctx context.Context, adminId string) (*R
 		return nil, user.ErrUserNotFound
 	}
 
-	_, err = s.userRoomRelation.GetRoomIdByUserId(ctx, adminId)
+	_, err = s.userRoomRelationRepo.GetRoomIdByUserId(ctx, adminId)
 	if !errors.Is(err, redis.Nil) {
 		return nil, ErrUserAlreadyInRoom
 	}
@@ -61,7 +65,7 @@ func (s *RoomService) GetRoom(ctx context.Context, roomId string) (*Room, error)
 		return nil, err
 	}
 
-	users, err := s.userRoomRelation.GetUsersByRoomId(ctx, roomId)
+	users, err := s.userRoomRelationRepo.GetUsersByRoomId(ctx, roomId)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +77,7 @@ func (s *RoomService) GetRoom(ctx context.Context, roomId string) (*Room, error)
 
 // Decide on returning room does not exist error
 func (s *RoomService) GetRoomUsers(ctx context.Context, roomId string) ([]string, error) {
-	users, err := s.userRoomRelation.GetUsersByRoomId(ctx, roomId)
+	users, err := s.userRoomRelationRepo.GetUsersByRoomId(ctx, roomId)
 	return users, err
 }
 
@@ -102,7 +106,7 @@ func (s *RoomService) CreateJoinRequest(ctx context.Context, roomId string, user
 	}
 
 	// Check if user is not in any other room
-	rId, err := s.userRoomRelation.GetRoomIdByUserId(ctx, userId)
+	rId, err := s.userRoomRelationRepo.GetRoomIdByUserId(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -111,7 +115,7 @@ func (s *RoomService) CreateJoinRequest(ctx context.Context, roomId string, user
 	}
 
 	// Create new join request
-	err = s.joinRequests.CreateJoinRequest(ctx, userId, roomId)
+	err = s.joinRequestsRepo.CreateJoinRequest(ctx, userId, roomId)
 	if err != nil {
 		return err
 	}
@@ -129,12 +133,12 @@ func (s *RoomService) CreateJoinRequest(ctx context.Context, roomId string, user
 
 func (s *RoomService) CancelJoinRequest(ctx context.Context, userId string) error {
 	//Assuming delete only happens if request exists
-	roomId, err := s.joinRequests.GetUserJoinRequestedRoom(ctx, userId)
+	roomId, err := s.joinRequestsRepo.GetUserJoinRequestedRoom(ctx, userId)
 	if err != nil {
 		return err
 	}
 
-	err = s.joinRequests.DeleteJoinRequest(ctx, userId)
+	err = s.joinRequestsRepo.DeleteJoinRequest(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -150,12 +154,12 @@ func (s *RoomService) CancelJoinRequest(ctx context.Context, userId string) erro
 
 func (s *RoomService) RejectJoinRequest(ctx context.Context, userId string) error {
 	// delete request entity and send channel event
-	roomId, err := s.joinRequests.GetUserJoinRequestedRoom(ctx, userId)
+	roomId, err := s.joinRequestsRepo.GetUserJoinRequestedRoom(ctx, userId)
 	if err != nil {
 		return err
 	}
 
-	err = s.joinRequests.DeleteJoinRequest(ctx, userId)
+	err = s.joinRequestsRepo.DeleteJoinRequest(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -171,19 +175,19 @@ func (s *RoomService) RejectJoinRequest(ctx context.Context, userId string) erro
 
 func (s *RoomService) AcceptJoinRequest(ctx context.Context, userId string) error {
 	// delete request entity, add user to room and send channel event
-	roomId, err := s.joinRequests.GetUserJoinRequestedRoom(ctx, userId)
+	roomId, err := s.joinRequestsRepo.GetUserJoinRequestedRoom(ctx, userId)
 	if err != nil {
 		return err
 	}
 
 	defer s.roomRepo.KeyMutex.Lock(roomId)()
 
-	err = s.joinRequests.DeleteJoinRequest(ctx, userId)
+	err = s.joinRequestsRepo.DeleteJoinRequest(ctx, userId)
 	if err != nil {
 		return err
 	}
 
-	err = s.userRoomRelation.AddUserToRoom(ctx, roomId, userId)
+	err = s.userRoomRelationRepo.AddUserToRoom(ctx, roomId, userId)
 	if err != nil {
 		return err
 	}

@@ -28,7 +28,10 @@ func main() {
 
 	// Services Initialization
 	userService := user.SetupConcreteService(*repository)
-	roomService := room.SetupConcreteService(*repository, userService)
+	roomService := room.SetupConcreteService(*repository)
+	roomService.SetDependencies(room.DependingServices{
+		UserService: userService,
+	})
 	// chatService := chat.NewService(chat.NewRepository(*repository))
 
 	// Http Controllers Initialization
