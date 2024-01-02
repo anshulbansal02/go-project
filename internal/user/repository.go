@@ -25,7 +25,10 @@ func (r *UserRepository) error(err error) error {
 
 // Create a new unsaved user
 func (r *UserRepository) NewUser(name string) *User {
-	return &User{ID: generateUserId(), Name: name}
+	return &User{
+		ID:   generateUserId(),
+		Name: name,
+	}
 }
 
 // Save user to repository

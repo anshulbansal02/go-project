@@ -1,11 +1,13 @@
 package user
 
 import (
+	tokenfactory "anshulbansal02/scribbly/pkg/token_factory"
 	"context"
 )
 
 type UserService struct {
-	userRepo *UserRepository
+	userRepo     *UserRepository
+	tokenFactory *tokenfactory.TokenFactory
 }
 
 /********************** Service Methods **********************/
@@ -14,7 +16,15 @@ type UserService struct {
 func (s *UserService) CreateUser(ctx context.Context, name string) (*User, error) {
 	user := s.userRepo.NewUser(name)
 
-	err := s.userRepo.SaveUser(ctx, user)
+	userSecret, err := s.tokenFactory.GenerateToken(UserClaims{
+		UserId: user.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	user.Secret = userSecret
+
+	err = s.userRepo.SaveUser(ctx, user)
 	if err != nil {
 		return nil, err
 	}
