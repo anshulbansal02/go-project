@@ -5,13 +5,12 @@ type clientPool struct {
 	clients map[string]*Client
 }
 
-// Add a new client to clients pool
-func (cp *clientPool) addNew(c *Client) {
+// Adds a new client to clients pool
+func (cp *clientPool) add(c *Client) {
 	cp.clients[c.ID] = c
 }
 
-// Close websocket client connection and remove from clients pool
-func (cp *clientPool) closeAndRemove(c *Client) {
+// Removes client from clients pool
+func (cp *clientPool) remove(c *Client) {
 	delete(cp.clients, c.ID)
-	c.socket.Close()
 }
