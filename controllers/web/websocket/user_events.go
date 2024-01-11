@@ -25,7 +25,7 @@ func (e *UserEventsExchange) Listen() {
 
 	e.wsManager.AddObserver(events.User.AssociateClient, func(m websockets.WebSocketMessage, c *websockets.Client) {
 		p := events.AssociateClientData{}
-		if err := json.Unmarshal(m.Payload.([]byte), p); err != nil {
+		if err := json.Unmarshal(m.Payload.([]byte), &p); err != nil {
 			return
 		}
 

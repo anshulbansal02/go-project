@@ -43,6 +43,7 @@ func main() {
 
 	// Events Exchange Setup
 	exchange.NewRoomEventsExchange(roomService, wsManager).Listen()
+	exchange.NewUserEventsExchange(userService, wsManager).Listen()
 
 	http.ListenAndServe(":6000", rootRouter)
 

@@ -2,6 +2,7 @@ package websockets
 
 import (
 	"anshulbansal02/scribbly/pkg/utils"
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -58,6 +59,7 @@ func (m *WebSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Req
 func (m *WebSocketManager) processMessage(client *Client, mt int, msg []byte) {
 	message, err := DecodeMessage(msg)
 	if err != nil {
+		fmt.Println("Error decoding message: ", err)
 		return
 	}
 
@@ -77,7 +79,8 @@ func (m *WebSocketManager) GetClient(clientId string) *Client {
 }
 
 func (m *WebSocketManager) EmitTo(clientId string, message WebSocketMessage) {
-
+	client := m.GetClient(clientId)
+	client.Emit(message)
 }
 
 func (m *WebSocketManager) Multicast(clientIds []string, exceptIds []string, message WebSocketMessage) {
