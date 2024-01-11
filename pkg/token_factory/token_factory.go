@@ -6,27 +6,28 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type TokenFactory struct {
+type TokenFactory[T jwt.Claims] struct {
 	signingKey    []byte
 	signingMethod jwt.SigningMethod
 	parser        jwt.Parser
 }
 
-func New(signingMethod jwt.SigningMethod, secret []byte) *TokenFactory {
-	return &TokenFactory{
+func New[T jwt.Claims](signingMethod jwt.SigningMethod, secret []byte) *TokenFactory[T] {
+	return &TokenFactory[T]{
 		signingKey:    secret,
 		signingMethod: signingMethod,
 		parser:        *jwt.NewParser(),
 	}
 }
 
-func (f *TokenFactory) GenerateToken(claims jwt.Claims) (string, error) {
+func (f *TokenFactory[T]) GenerateToken(claims T) (string, error) {
+
 	token := jwt.NewWithClaims(f.signingMethod, claims)
 
 	return token.SignedString(f.signingKey)
 }
 
-func (f *TokenFactory) IsTokenValid(token string, claims *jwt.Claims) (bool, error) {
+func (f *TokenFactory[T]) IsTokenValid(token string, claims *T) (bool, error) {
 	t, err := f.parser.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return t, nil
 	})
@@ -41,8 +42,8 @@ func (f *TokenFactory) IsTokenValid(token string, claims *jwt.Claims) (bool, err
 	return t.Valid, nil
 }
 
-func (f *TokenFactory) GetClaims(token string, dstClaims *jwt.Claims) error {
-	_, err := f.parser.ParseWithClaims(token, *dstClaims, func(t *jwt.Token) (interface{}, error) {
+func (f *TokenFactory[T]) GetClaims(token string, dstClaims T) error {
+	_, err := f.parser.ParseWithClaims(token, dstClaims, func(t *jwt.Token) (interface{}, error) {
 		return t, nil
 	})
 

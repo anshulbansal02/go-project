@@ -7,7 +7,7 @@ import (
 
 type UserService struct {
 	userRepo     *UserRepository
-	tokenFactory *tokenfactory.TokenFactory
+	tokenFactory *tokenfactory.TokenFactory[UserClaims]
 }
 
 /********************** Service Methods **********************/
@@ -36,6 +36,17 @@ func (s *UserService) CreateUser(ctx context.Context, name string) (*User, error
 func (s *UserService) GetUser(ctx context.Context, userId string) (*User, error) {
 	user, err := s.userRepo.GetUser(ctx, userId)
 	return user, err
+}
+
+func (s *UserService) VerifyUserToken(token string) (string, error) {
+
+	claims := UserClaims{}
+
+	if err := s.tokenFactory.GetClaims(token, claims); err != nil {
+		return "", err
+	}
+
+	return claims.UserId, nil
 }
 
 // Delete a user by its Id

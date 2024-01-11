@@ -76,6 +76,10 @@ func (m *WebSocketManager) GetClient(clientId string) *Client {
 	return m.clientPool.clients[clientId]
 }
 
+func (m *WebSocketManager) EmitTo(clientId string, message WebSocketMessage) {
+
+}
+
 func (m *WebSocketManager) Multicast(clientIds []string, exceptIds []string, message WebSocketMessage) {
 	for _, clientId := range clientIds {
 		if slices.Contains(exceptIds, clientId) {
@@ -83,6 +87,5 @@ func (m *WebSocketManager) Multicast(clientIds []string, exceptIds []string, mes
 		}
 
 		m.GetClient(clientId).Emit(message)
-
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type Observer func(m WebSocketMessage)
+type Observer func(m WebSocketMessage, c *Client)
 
 type observerWithId struct {
 	id       string
@@ -133,19 +133,19 @@ func (h *Hub) DispatchMessage(client *Client, message WebSocketMessage) {
 
 	// For observers bound to client and event both
 	for _, handle := range h.observers[getObserverSlotKey(client, &event)] {
-		go handle.observer(message)
+		go handle.observer(message, client)
 	}
 	// For observers bound to all clients
 	for _, handle := range h.observers[getObserverSlotKey(nil, &event)] {
-		go handle.observer(message)
+		go handle.observer(message, client)
 	}
 	// For observers bound to all events
 	for _, handle := range h.observers[getObserverSlotKey(client, nil)] {
-		go handle.observer(message)
+		go handle.observer(message, client)
 	}
 	// For observers bound to all
 	for _, handle := range h.observers[getObserverSlotKey(nil, nil)] {
-		go handle.observer(message)
+		go handle.observer(message, client)
 	}
 
 }

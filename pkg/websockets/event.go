@@ -8,7 +8,7 @@ type WebSocketMessage struct {
 	Payload   any
 }
 
-func NewEvent(name Event, payload any) WebSocketMessage {
+func NewNotification(name Event, payload any) WebSocketMessage {
 	return WebSocketMessage{
 		Type:      NotificationMessage,
 		EventName: name,

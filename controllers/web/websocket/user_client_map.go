@@ -14,8 +14,14 @@ func NewClientMap() *ClientMap {
 	}
 }
 
-func (cm *ClientMap) GetClientIds(userIds ...string) {
+func (cm *ClientMap) GetClientIds(userIds []string) []string {
+	clientIds := make([]string, len(userIds))
 
+	for i, userId := range userIds {
+		clientIds[i] = cm.userClient[userId]
+	}
+
+	return clientIds
 }
 
 func (cm *ClientMap) GetUserId(clientId string) (userId string, exists bool) {

@@ -6,7 +6,6 @@ import (
 	"anshulbansal02/scribbly/internal/repository"
 	"anshulbansal02/scribbly/internal/room"
 	"anshulbansal02/scribbly/internal/user"
-	tokenfactory "anshulbansal02/scribbly/pkg/token_factory"
 	"anshulbansal02/scribbly/pkg/websockets"
 	"net/http"
 
@@ -27,10 +26,9 @@ func main() {
 	})
 	wsManager := websockets.NewWebSocketManager()
 	rootRouter := chi.NewRouter()
-	tokenFactory := tokenfactory.New(jwt.SigningMethodHS256, []byte("mysecret"))
 
 	// Services Initialization
-	userService := user.SetupConcreteService(*repository, tokenFactory)
+	userService := user.SetupConcreteService(*repository, user.Config{Secret: []byte("abce"), SigningMethod: jwt.SigningMethodHS256})
 	roomService := room.SetupConcreteService(*repository)
 	roomService.SetDependencies(room.DependingServices{
 		UserService: userService,

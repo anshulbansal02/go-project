@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"anshulbansal02/scribbly/events"
 	"anshulbansal02/scribbly/internal/room"
 	"anshulbansal02/scribbly/pkg/websockets"
 	"context"
@@ -23,7 +24,7 @@ func NewRoomEventsExchange(roomService *room.RoomService, wsManager *websockets.
 func (e *RoomEventsExchange) Listen() {
 
 	// Handle Events from Internal channel
-	handleUserRoomEvents := func() {
+	handleInternalUserRoomEvents := func() {
 		for {
 			event := <-e.roomService.UserEventsChannel
 
@@ -43,17 +44,24 @@ func (e *RoomEventsExchange) Listen() {
 	}
 
 	// Handle Events from clients
-	e.wsManager.OnEvent("cancelRequest", e.handleCE_CancelRequest)
+	e.wsManager.AddObserver(events.Room.CancelJoinRequest, e.handleCE_CancelRequest)
 
-	go handleUserRoomEvents()
+	go handleInternalUserRoomEvents()
 
 }
+
+// System Event Handlers
 
 func (e *RoomEventsExchange) handleIE_JoinRequest(userId, roomId string) {
 	adminId := e.roomService.GetRoomAdmin(context.Background(), roomId)
 
 	if adminId != nil {
-		e.wsManager.Send(roomId, "joinRequest:{userId}")
+		clientId, ok := e.clientMap.GetClientId(*adminId)
+		if ok {
+			e.wsManager.EmitTo(clientId, websockets.NewNotification(events.Room.JoinRequest, events.RequestData{
+				UserId: userId,
+			}))
+		}
 	}
 }
 
@@ -61,7 +69,12 @@ func (e *RoomEventsExchange) handleIE_CancelRequest(userId, roomId string) {
 	adminId := e.roomService.GetRoomAdmin(context.Background(), roomId)
 
 	if adminId != nil {
-		e.wsManager.Send(roomId, "cancelRequest:{userId}")
+		clientId, ok := e.clientMap.GetClientId(*adminId)
+		if ok {
+			e.wsManager.EmitTo(clientId, websockets.NewNotification(events.Room.CancelJoinRequest, events.RequestData{
+				UserId: userId,
+			}))
+		}
 	}
 }
 
@@ -71,8 +84,11 @@ func (e *RoomEventsExchange) handleIE_UserLeft(userId, roomId string) {
 		return
 	}
 
-	e.wsManager.Multicast(userIds, nil, "userLEft:{userId}")
+	clientIds := e.clientMap.GetClientIds(userIds)
 
+	e.wsManager.Multicast(clientIds, []string{userId}, websockets.NewNotification(events.Room.UserLeft, events.RoomUserData{
+		UserId: userId,
+	}))
 }
 
 func (e *RoomEventsExchange) handleIE_UserJoined(userId, roomId string) {
@@ -81,11 +97,16 @@ func (e *RoomEventsExchange) handleIE_UserJoined(userId, roomId string) {
 		return
 	}
 
-	e.wsManager.Multicast(userIds, nil, "userJoined:{userId}")
+	clientIds := e.clientMap.GetClientIds(userIds)
 
+	e.wsManager.Multicast(clientIds, nil, websockets.NewNotification(events.Room.UserJoined, events.RoomUserData{
+		UserId: userId,
+	}))
 }
 
-func (e *RoomEventsExchange) handleCE_CancelRequest(client *websockets.Client, event websockets.WebSocketEvent) {
+// Client Event Handlers
+
+func (e *RoomEventsExchange) handleCE_CancelRequest(message websockets.WebSocketMessage, client *websockets.Client) {
 	userId, ok := e.clientMap.GetUserId(client.ID)
 	if !ok {
 		return
