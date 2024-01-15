@@ -45,7 +45,7 @@ func (m *WebSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Req
 	client := &Client{
 		ID:           generateClientId(),
 		socket:       conn,
-		writeChannel: make(chan WebSocketMessage),
+		writeChannel: make(chan OutgoingWebSocketMessage),
 		manager:      m,
 	}
 
@@ -78,12 +78,12 @@ func (m *WebSocketManager) GetClient(clientId string) *Client {
 	return m.clientPool.clients[clientId]
 }
 
-func (m *WebSocketManager) EmitTo(clientId string, message WebSocketMessage) {
+func (m *WebSocketManager) EmitTo(clientId string, message OutgoingWebSocketMessage) {
 	client := m.GetClient(clientId)
 	client.Emit(message)
 }
 
-func (m *WebSocketManager) Multicast(clientIds []string, exceptIds []string, message WebSocketMessage) {
+func (m *WebSocketManager) Multicast(clientIds []string, exceptIds []string, message OutgoingWebSocketMessage) {
 	for _, clientId := range clientIds {
 		if slices.Contains(exceptIds, clientId) {
 			continue

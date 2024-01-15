@@ -39,12 +39,12 @@ func main() {
 	rootRouter.Mount("/users", web.SetupUserHttpControllers(*userService).Routes())
 	rootRouter.Mount("/rooms", web.SetupRoomHttpControllers(*roomService).Routes())
 
-	rootRouter.Get("/client", wsManager.HandleWSConnection)
+	rootRouter.HandleFunc("/client", wsManager.HandleWSConnection)
 
 	// Events Exchange Setup
 	exchange.NewRoomEventsExchange(roomService, wsManager).Listen()
 	exchange.NewUserEventsExchange(userService, wsManager).Listen()
 
-	http.ListenAndServe(":6000", rootRouter)
+	http.ListenAndServe(":5000", rootRouter)
 
 }

@@ -8,7 +8,10 @@ require (
 	github.com/redis/go-redis/v9 v9.3.0
 )
 
-require github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+require (
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect

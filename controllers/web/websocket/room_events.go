@@ -106,7 +106,7 @@ func (e *RoomEventsExchange) handleIE_UserJoined(userId, roomId string) {
 
 // Client Event Handlers
 
-func (e *RoomEventsExchange) handleCE_CancelRequest(message websockets.WebSocketMessage, client *websockets.Client) {
+func (e *RoomEventsExchange) handleCE_CancelRequest(message websockets.IncomingWebSocketMessage, client *websockets.Client) {
 	userId, ok := e.clientMap.GetUserId(client.ID)
 	if !ok {
 		return

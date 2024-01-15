@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type Observer func(m WebSocketMessage, c *Client)
+type Observer func(m IncomingWebSocketMessage, c *Client)
 
 type observerWithId struct {
 	id       string
@@ -128,7 +128,7 @@ func (h *Hub) RemoveObserversForEvent(event Event) {
 }
 
 // Dispatches incoming message from a client to all registered observers
-func (h *Hub) DispatchMessage(client *Client, message WebSocketMessage) {
+func (h *Hub) DispatchMessage(client *Client, message IncomingWebSocketMessage) {
 	event := message.EventName
 
 	// For observers bound to client and event both

@@ -35,7 +35,7 @@ const (
 	ResponseMessage     MessageType = 0x3
 )
 
-func EncodeMessage(message *WebSocketMessage) ([]byte, error) {
+func EncodeMessage(message *OutgoingWebSocketMessage) ([]byte, error) {
 
 	payload, err := msgpack.Marshal(message.Payload)
 	if err != nil {
@@ -43,18 +43,17 @@ func EncodeMessage(message *WebSocketMessage) ([]byte, error) {
 	}
 
 	eventNameLength := len(message.EventName)
-	totalBits := metaBits + eventNameLength*8 + len(payload)*8
-	totalBytes := (totalBits + 7) / 8 // Adds 7 to ceil result
+	if eventNameLength > maxEventNameLength {
+		return nil, fmt.Errorf("websocket encode ~ event name length is greater than %d", maxEventNameLength)
+	}
 
+	totalBytes := ((metaBits + 7) / 8) + eventNameLength + len(payload) // Adds 7 to ceil result
 	encoded := make([]byte, totalBytes)
 
 	// Encode MessageType
 	encoded[0] = byte(message.Type) << 4
 
 	// Encode EventNameLength
-	if eventNameLength > maxEventNameLength {
-		return nil, fmt.Errorf("websocket encode ~ event name length is greater than %d", maxEventNameLength)
-	}
 	encoded[1] = byte(eventNameLength)
 
 	// Encode EventName
@@ -66,7 +65,7 @@ func EncodeMessage(message *WebSocketMessage) ([]byte, error) {
 	return encoded, nil
 }
 
-func DecodeMessage(encoded []byte) (*WebSocketMessage, error) {
+func DecodeMessage(encoded []byte) (*IncomingWebSocketMessage, error) {
 
 	if len(encoded) < 3 {
 		return nil, fmt.Errorf("websocket decode ~ message is too short to be decoded")
@@ -80,9 +79,15 @@ func DecodeMessage(encoded []byte) (*WebSocketMessage, error) {
 	eventName := Event(string(encoded[2 : 2+eventNameLength]))
 
 	// Decode Payload
-	payload := encoded[2+eventNameLength:]
+	encodedPayload := encoded[2+eventNameLength:]
+	var payload UnpackedPayload
 
-	return &WebSocketMessage{
+	err := msgpack.Unmarshal(encodedPayload, &payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return &IncomingWebSocketMessage{
 		Type:      messageType,
 		EventName: eventName,
 		Payload:   payload,

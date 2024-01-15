@@ -1,6 +1,8 @@
 package events
 
-import "anshulbansal02/scribbly/pkg/websockets"
+import (
+	"anshulbansal02/scribbly/pkg/websockets"
+)
 
 var User = struct {
 	AssociateClient websockets.Event

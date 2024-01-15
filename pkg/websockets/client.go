@@ -2,6 +2,7 @@ package websockets
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -11,23 +12,25 @@ import (
 type Client struct {
 	ID           string
 	socket       *websocket.Conn
-	writeChannel chan WebSocketMessage
+	writeChannel chan OutgoingWebSocketMessage
 	manager      *WebSocketManager
+	closeOnce    sync.Once
 }
 
 // Closes and cleans up client from all places
 func (c *Client) closeAndCleanup() {
-	// Remove client from client pool
-	c.manager.clientPool.remove(c)
-	// Remove all observers for client
-	c.manager.hub.RemoveObserversForClient(c)
-	// Close writeChannel
-	close(c.writeChannel)
-	// Close underlying socket connection after sending close control message
-	c.socket.SetWriteDeadline(time.Now().Add(writeWait))
-	c.socket.WriteMessage(websocket.CloseMessage, []byte{})
-	c.socket.Close()
-
+	c.closeOnce.Do(func() {
+		// Remove client from client pool
+		c.manager.clientPool.remove(c)
+		// Remove all observers for client
+		c.manager.hub.RemoveObserversForClient(c)
+		// Close writeChannel
+		close(c.writeChannel)
+		// Close underlying socket connection after sending close control message
+		c.socket.SetWriteDeadline(time.Now().Add(writeWait))
+		c.socket.WriteMessage(websocket.CloseMessage, []byte{})
+		c.socket.Close()
+	})
 }
 
 // Reads incoming messages from websocket client and sends back to manager's processMessage
@@ -43,18 +46,12 @@ func (c *Client) readLoop() {
 	})
 
 	for {
-		mt, reader, err := c.socket.NextReader()
+		mt, msg, err := c.socket.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				fmt.Println("ReadLoop Error: ", err)
 			}
 			break
-		}
-
-		var msg []byte
-		if _, err = reader.Read(msg); err != nil {
-			fmt.Println("ReadLoop Error: ", err)
-			continue
 		}
 
 		go c.manager.processMessage(c, mt, msg)
@@ -95,7 +92,10 @@ func (c *Client) writeLoop() {
 			n := len(c.writeChannel)
 			for i := 0; i < n; i++ {
 				w.Write(newline)
-				message = <-c.writeChannel
+				message, ok = <-c.writeChannel
+				if !ok {
+					return
+				}
 				msg, err = EncodeMessage(&message)
 				if err == nil {
 					w.Write([]byte(msg))
@@ -115,7 +115,7 @@ func (c *Client) writeLoop() {
 }
 
 // Emits a websocket message to the client
-func (c *Client) Emit(e WebSocketMessage) {
+func (c *Client) Emit(e OutgoingWebSocketMessage) {
 	c.writeChannel <- e
 }
 
