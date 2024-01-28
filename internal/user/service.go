@@ -40,7 +40,7 @@ func (s *UserService) GetUser(ctx context.Context, userId string) (*User, error)
 
 func (s *UserService) VerifyUserToken(token string) (string, error) {
 
-	claims := UserClaims{}
+	claims := &UserClaims{}
 
 	if err := s.tokenFactory.GetClaims(token, claims); err != nil {
 		return "", err

@@ -34,7 +34,7 @@ func NewResponse(name Event, requestId string, payload any) OutgoingWebSocketMes
 		Type:      ResponseMessage,
 		EventName: name,
 		Meta: map[string]any{
-			"requestId": requestId,
+			"rId": requestId,
 		},
 		Payload: payload,
 	}

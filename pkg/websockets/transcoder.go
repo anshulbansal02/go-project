@@ -76,12 +76,12 @@ func EncodeMessage(message *OutgoingWebSocketMessage) ([]byte, error) {
 	binary.LittleEndian.PutUint16(encoded[offset:2+offset], uint16(metaLength))
 
 	// Encode Meta Data
-	offset += 1
+	offset += 2
 	copy(encoded[offset:], meta)
 
 	// Encode Payload
 	offset += len(meta)
-	copy(encoded[2+eventNameLength:], payload)
+	copy(encoded[offset:], payload)
 
 	return encoded, nil
 }

@@ -42,9 +42,9 @@ func (f *TokenFactory[T]) IsTokenValid(token string, claims *T) (bool, error) {
 	return t.Valid, nil
 }
 
-func (f *TokenFactory[T]) GetClaims(token string, dstClaims T) error {
+func (f *TokenFactory[T]) GetClaims(token string, dstClaims jwt.Claims) error {
 	_, err := f.parser.ParseWithClaims(token, dstClaims, func(t *jwt.Token) (interface{}, error) {
-		return t, nil
+		return f.signingKey, nil
 	})
 
 	return err

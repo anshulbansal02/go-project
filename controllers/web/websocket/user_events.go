@@ -32,9 +32,17 @@ func (e *UserEventsExchange) Listen() {
 		}
 
 		userId, err := e.userService.VerifyUserToken(data.UserSecret)
-		if err == nil {
+		if err != nil {
+			fmt.Println("VerifyUserToken error: ", err)
+		} else {
 			e.clientMap.Add(c.ID, userId)
+			requestId, ok := m.Meta["rId"]
+			if !ok {
+				return
+			}
+			c.Emit(websockets.NewResponse(events.User.AssociateClient, requestId.(string), nil))
 		}
+
 	})
 
 }
