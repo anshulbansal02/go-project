@@ -30,6 +30,8 @@ func (c *Client) closeAndCleanup() {
 		c.socket.SetWriteDeadline(time.Now().Add(writeWait))
 		c.socket.WriteMessage(websocket.CloseMessage, []byte{})
 		c.socket.Close()
+
+		fmt.Println("Client Disconnected: ", c.ID)
 	})
 }
 
@@ -78,7 +80,7 @@ func (c *Client) writeLoop() {
 
 			c.socket.SetWriteDeadline(time.Now().Add(writeWait))
 
-			w, err := c.socket.NextWriter(websocket.TextMessage)
+			w, err := c.socket.NextWriter(websocket.BinaryMessage)
 			if err != nil {
 				return
 			}

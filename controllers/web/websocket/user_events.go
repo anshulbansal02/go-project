@@ -25,17 +25,13 @@ func (e *UserEventsExchange) Listen() {
 
 	e.wsManager.AddObserver(events.User.AssociateClient, func(m websockets.IncomingWebSocketMessage, c *websockets.Client) {
 
-		k := events.AssociateClientData{}
-		err := m.Payload.Assert(&k)
-
-		if err != nil {
+		data := events.AssociateClientData{}
+		if err := m.Payload.Assert(&data); err != nil {
 			fmt.Println("Cannot type assert associate client data")
 			return
 		}
 
-		fmt.Println(c.ID, k)
-
-		userId, err := e.userService.VerifyUserToken(k.UserSecret)
+		userId, err := e.userService.VerifyUserToken(data.UserSecret)
 		if err == nil {
 			e.clientMap.Add(c.ID, userId)
 		}
