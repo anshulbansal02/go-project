@@ -103,21 +103,20 @@ func DecodeMessage(encoded []byte) (*IncomingWebSocketMessage, error) {
 	eventName := Event(string(encoded[offset : offset+eventNameLength]))
 
 	// Decode Meta Data Length
-	offset += int(eventNameLength) + 1
-	metaLength := binary.LittleEndian.Uint16(encoded[offset : 2+offset])
+	offset += int(eventNameLength)
+	metaLength := int(binary.LittleEndian.Uint16(encoded[offset : 2+offset]))
 
 	// Decode Meta Data
 	offset += 2
-	encodedMeta := encoded[offset : offset+int(metaLength)]
 	var meta map[string]any
-	if err := msgpack.Unmarshal(encodedMeta, &meta); err != nil {
+	if err := msgpack.Unmarshal(encoded[offset:offset+metaLength], &meta); err != nil {
 		return nil, err
 	}
 
 	// Decode Payload
-	encodedPayload := encoded[2+eventNameLength:]
+	offset += metaLength
 	var payload UnpackedPayload
-	if err := msgpack.Unmarshal(encodedPayload, &payload); err != nil {
+	if err := msgpack.Unmarshal(encoded[offset:], &payload); err != nil {
 		return nil, err
 	}
 
