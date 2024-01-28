@@ -53,6 +53,8 @@ func (m *WebSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Req
 
 	go client.readLoop()
 	go client.writeLoop()
+
+	fmt.Println("Client Connected: ", client.ID)
 }
 
 // Process a single client websocket emitted message

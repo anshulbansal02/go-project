@@ -13,6 +13,7 @@ func (p *UnpackedPayload) Assert(dst any) error {
 type WebSocketMessage[T any] struct {
 	Type      MessageType
 	EventName Event
+	Meta      map[string]any
 	Payload   T
 }
 
@@ -25,5 +26,16 @@ func NewNotification(name Event, payload any) OutgoingWebSocketMessage {
 		Type:      NotificationMessage,
 		EventName: name,
 		Payload:   payload,
+	}
+}
+
+func NewResponse(name Event, requestId string, payload any) OutgoingWebSocketMessage {
+	return OutgoingWebSocketMessage{
+		Type:      ResponseMessage,
+		EventName: name,
+		Meta: map[string]any{
+			"requestId": requestId,
+		},
+		Payload: payload,
 	}
 }

@@ -1,7 +1,9 @@
 package websockets
 
 import (
+	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -37,29 +39,48 @@ const (
 
 func EncodeMessage(message *OutgoingWebSocketMessage) ([]byte, error) {
 
-	payload, err := msgpack.Marshal(message.Payload)
-	if err != nil {
-		return nil, fmt.Errorf("websocket encode ~ failed to encode message payload: %w", err)
-	}
-
 	eventNameLength := len(message.EventName)
 	if eventNameLength > maxEventNameLength {
 		return nil, fmt.Errorf("websocket encode ~ event name length is greater than %d", maxEventNameLength)
 	}
 
-	totalBytes := ((metaBits + 7) / 8) + eventNameLength + len(payload) // Adds 7 to ceil result
+	meta, err := msgpack.Marshal(message.Meta)
+	if err != nil {
+		return nil, fmt.Errorf("websocket encode ~ failed to encode meta: %w", err)
+	}
+
+	metaLength := len(meta)
+	if metaLength > math.MaxUint16 {
+		return nil, fmt.Errorf("websocket encode ~ cannot encode meta data greater than 2 bytes in size")
+	}
+
+	payload, err := msgpack.Marshal(message.Payload)
+	if err != nil {
+		return nil, fmt.Errorf("websocket encode ~ failed to encode message payload: %w", err)
+	}
+
+	totalBytes := metaBytes + eventNameLength + metaLength + len(payload)
 	encoded := make([]byte, totalBytes)
 
-	// Encode MessageType
+	// Encode Message Type
 	encoded[0] = byte(message.Type) << 4
 
-	// Encode EventNameLength
+	// Encode Event Name Length
 	encoded[1] = byte(eventNameLength)
 
-	// Encode EventName
+	// Encode Event Name
 	copy(encoded[2:], []byte(message.EventName))
 
+	// Encode Meta Data Length
+	offset := 2 + eventNameLength
+	binary.LittleEndian.PutUint16(encoded[offset:2+offset], uint16(metaLength))
+
+	// Encode Meta Data
+	offset += 1
+	copy(encoded[offset:], meta)
+
 	// Encode Payload
+	offset += len(meta)
 	copy(encoded[2+eventNameLength:], payload)
 
 	return encoded, nil
@@ -67,29 +88,43 @@ func EncodeMessage(message *OutgoingWebSocketMessage) ([]byte, error) {
 
 func DecodeMessage(encoded []byte) (*IncomingWebSocketMessage, error) {
 
-	if len(encoded) < 3 {
+	if len(encoded) < metaBytes {
 		return nil, fmt.Errorf("websocket decode ~ message is too short to be decoded")
 	}
 
-	// Decode MessageType
+	// Decode Message Type
 	messageType := MessageType(encoded[0] >> 4)
 
-	// Decode EventNameLength
-	eventNameLength := encoded[1]
-	eventName := Event(string(encoded[2 : 2+eventNameLength]))
+	// Decode Event Name Length
+	eventNameLength := int(encoded[1])
+
+	// Decode Event Name
+	offset := 2
+	eventName := Event(string(encoded[offset : offset+eventNameLength]))
+
+	// Decode Meta Data Length
+	offset += int(eventNameLength) + 1
+	metaLength := binary.LittleEndian.Uint16(encoded[offset : 2+offset])
+
+	// Decode Meta Data
+	offset += 2
+	encodedMeta := encoded[offset : offset+int(metaLength)]
+	var meta map[string]any
+	if err := msgpack.Unmarshal(encodedMeta, &meta); err != nil {
+		return nil, err
+	}
 
 	// Decode Payload
 	encodedPayload := encoded[2+eventNameLength:]
 	var payload UnpackedPayload
-
-	err := msgpack.Unmarshal(encodedPayload, &payload)
-	if err != nil {
+	if err := msgpack.Unmarshal(encodedPayload, &payload); err != nil {
 		return nil, err
 	}
 
 	return &IncomingWebSocketMessage{
 		Type:      messageType,
 		EventName: eventName,
+		Meta:      meta,
 		Payload:   payload,
 	}, nil
 }
