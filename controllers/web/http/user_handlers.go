@@ -4,6 +4,7 @@ import (
 	"anshulbansal02/scribbly/internal/user"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -55,6 +56,26 @@ func (h *userHttpControllers) Routes() chi.Router {
 		}
 
 		h.JSON(w, http.StatusOK, user)
+	})
+
+	// @GET /list/<userIds> - Get user info by id
+	h.router.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+
+		userIds := strings.Split(r.URL.Query().Get("userIds[]"), ",")
+
+		users, err := h.userService.GetUsers(r.Context(), userIds)
+
+		if err != nil {
+			h.JSON(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		for _, u := range users {
+			u.Secret = ""
+		}
+
+		h.JSON(w, http.StatusOK, users)
+
 	})
 
 	// @PATCH /<userId> - Update user info

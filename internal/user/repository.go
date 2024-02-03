@@ -47,6 +47,35 @@ func (r *UserRepository) SaveUser(ctx context.Context, user *User) error {
 	return nil
 }
 
+func (r *UserRepository) GetUsers(ctx context.Context, userIds []string) ([]*User, error) {
+
+	namespacedIds := utils.MapFunc[string, string](userIds, func(id string) string {
+		return getNamespaceKey(id)
+	})
+
+	u, err := r.Rdb.MGet(ctx, namespacedIds...).Result()
+	if err != nil {
+		return nil, r.error(err)
+	}
+
+	users := []*User{}
+
+	for _, encodedUser := range u {
+		if encodedUser == nil {
+			continue
+		}
+		user := &User{}
+		err = json.Unmarshal([]byte(encodedUser.(string)), user)
+		if err != nil {
+			return nil, r.error(err)
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 // Get a user by ID
 func (r *UserRepository) GetUser(ctx context.Context, userId string) (*User, error) {
 	u, err := r.Rdb.Get(ctx, getNamespaceKey(userId)).Result()
@@ -69,7 +98,7 @@ func (r *UserRepository) GetUser(ctx context.Context, userId string) (*User, err
 
 // Delete user by ID
 func (r *UserRepository) DeleteUser(ctx context.Context, userId string) error {
-	err := r.Rdb.Del(ctx, userId).Err()
+	err := r.Rdb.Del(ctx, getNamespaceKey(userId)).Err()
 	if err != nil {
 		return r.error(err)
 	}
@@ -78,7 +107,7 @@ func (r *UserRepository) DeleteUser(ctx context.Context, userId string) error {
 }
 
 func (r *UserRepository) UserExists(ctx context.Context, userId string) (bool, error) {
-	exists, err := r.Rdb.Exists(ctx, userId).Result()
+	exists, err := r.Rdb.Exists(ctx, getNamespaceKey(userId)).Result()
 
 	if err != nil {
 		if errors.Is(err, redis.Nil) {

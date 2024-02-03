@@ -77,8 +77,8 @@ func (s *RoomService) GetRoom(ctx context.Context, roomId string) (*Room, error)
 
 // Decide on returning room does not exist error
 func (s *RoomService) GetRoomUsers(ctx context.Context, roomId string) ([]string, error) {
-	users, err := s.userRoomRelationRepo.GetUsersByRoomId(ctx, roomId)
-	return users, err
+	userIds, err := s.userRoomRelationRepo.GetUsersByRoomId(ctx, roomId)
+	return userIds, err
 }
 
 func (s *RoomService) DeleteRoom(ctx context.Context, roomId string) error {

@@ -25,10 +25,11 @@ func (r *RoomRepository) error(err error) error {
 // Create a new unsaved room
 func (r *RoomRepository) NewRoom(adminId *string, roomType string) *Room {
 	return &Room{
-		ID:    generateRoomId(),
-		Code:  generateRoomCode(),
-		Type:  roomType,
-		Admin: adminId,
+		ID:           generateRoomId(),
+		Code:         generateRoomCode(),
+		Participants: []string{*adminId},
+		Type:         roomType,
+		Admin:        adminId,
 	}
 }
 
@@ -39,9 +40,11 @@ func (r *RoomRepository) SaveRoom(ctx context.Context, room *Room) error {
 		return r.error(err)
 	}
 
-	err = r.Rdb.Set(ctx, GetNamespaceKey(room.ID), u, 0).Err()
+	if err = r.Rdb.Set(ctx, GetNamespaceKey(room.ID), u, 0).Err(); err != nil {
+		return r.error(err)
+	}
 
-	return r.error(err)
+	return nil
 }
 
 // Get room by ID

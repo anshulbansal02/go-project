@@ -32,6 +32,11 @@ func (s *UserService) CreateUser(ctx context.Context, name string) (*User, error
 	return user, nil
 }
 
+func (s *UserService) GetUsers(ctx context.Context, userIds []string) ([]*User, error) {
+	users, err := s.userRepo.GetUsers(ctx, userIds)
+	return users, err
+}
+
 // Get a user by its Id
 func (s *UserService) GetUser(ctx context.Context, userId string) (*User, error) {
 	user, err := s.userRepo.GetUser(ctx, userId)
@@ -72,6 +77,7 @@ func (s *UserService) UpdateUserName(ctx context.Context, userId string, newName
 
 func (s *UserService) UserExists(ctx context.Context, userId string) (bool, error) {
 	exists, err := s.userRepo.UserExists(ctx, userId)
+
 	if err != nil {
 		return false, err
 	}

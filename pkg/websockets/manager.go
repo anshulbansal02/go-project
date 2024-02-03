@@ -32,7 +32,7 @@ func NewWebSocketManager() *WebSocketManager {
 	}
 }
 
-var generateClientId = utils.NewRandomStringGenerator(nil, 8)
+var generateClientId = utils.NewRandomStringGenerator(utils.CHARSET_URL_SAFE, 8)
 
 // Upgrades an HTTP connection to WebSocket one
 func (m *WebSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Request) {

@@ -27,7 +27,7 @@ func NewHub() *Hub {
 	}
 }
 
-var generateObserverId = utils.NewRandomStringGenerator(nil, 6)
+var generateObserverId = utils.NewRandomStringGenerator(utils.CHARSET_URL_SAFE, 6)
 
 // Creates a mapping key for given client and event to store observers in a flat map
 func getObserverSlotKey(client *Client, event *Event) string {
