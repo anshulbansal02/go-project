@@ -31,11 +31,11 @@ func (e *UserEventsExchange) Listen() {
 			return
 		}
 
-		userId, err := e.userService.VerifyUserToken(data.UserSecret)
+		claims, err := e.userService.VerifyUserToken(data.UserSecret)
 		if err != nil {
 			fmt.Println("VerifyUserToken error: ", err)
 		} else {
-			e.clientMap.Add(c.ID, userId)
+			e.clientMap.Add(c.ID, claims.UserId)
 			requestId, ok := m.Meta["rId"]
 			if !ok {
 				return

@@ -19,5 +19,6 @@ type RequestData struct {
 }
 
 type RoomUserData struct {
+	RoomId string
 	UserId string
 }

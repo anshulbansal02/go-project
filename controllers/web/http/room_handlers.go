@@ -1,6 +1,7 @@
 package web
 
 import (
+	"anshulbansal02/scribbly/controllers/middlewares"
 	"anshulbansal02/scribbly/internal/room"
 	"anshulbansal02/scribbly/internal/user"
 	"errors"
@@ -61,10 +62,21 @@ func (h *roomHttpControllers) Routes() chi.Router {
 		h.JSON(w, http.StatusOK, room)
 	})
 
-	h.router.Post("/join/{roomId}", func(w http.ResponseWriter, r *http.Request) {
+	h.router.Post("/join/{roomId}", middlewares.WithAuthorization(func(w http.ResponseWriter, r *http.Request) {
+		roomId := chi.URLParam(r, "roomId")
+
+		user := r.Context().Value(middlewares.UserCtxKey).(middlewares.UserAuthContext)
+
 		// Create request to join room
-		h.roomService.CreateJoinRequest(r.Context(), "", "")
-	})
+		err := h.roomService.CreateJoinRequest(r.Context(), roomId, user.UserId)
+
+		if err != nil {
+			h.JSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		h.JSON(w, http.StatusProcessing, "Requested")
+	}))
 
 	h.router.Delete("/join", func(w http.ResponseWriter, r *http.Request) {
 		// Cancel join request

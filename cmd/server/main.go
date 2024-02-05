@@ -1,6 +1,7 @@
 package main
 
 import (
+	"anshulbansal02/scribbly/controllers/middlewares"
 	web "anshulbansal02/scribbly/controllers/web/http"
 	exchange "anshulbansal02/scribbly/controllers/web/websocket"
 	"anshulbansal02/scribbly/internal/repository"
@@ -27,14 +28,15 @@ func main() {
 	wsManager := websockets.NewWebSocketManager()
 	rootRouter := chi.NewRouter()
 
-	rootRouter.Use(Cors)
-
 	// Services Initialization
 	userService := user.SetupConcreteService(*repository, user.Config{Secret: []byte("abce"), SigningMethod: jwt.SigningMethodHS256})
 	roomService := room.SetupConcreteService(*repository)
 	roomService.SetDependencies(room.DependingServices{
 		UserService: userService,
 	})
+
+	rootRouter.Use(middlewares.Authenticate(userService))
+	rootRouter.Use(middlewares.Cors)
 
 	// Http Controllers Initialization
 	rootRouter.Mount("/", web.SetupHealthcheckHttpControllers().Routes())
@@ -49,19 +51,4 @@ func main() {
 
 	http.ListenAndServe(":5000", rootRouter)
 
-}
-
-// [TODO] Move to dedicated middleware directory
-func Cors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "*")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		if r.Method == http.MethodOptions {
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }

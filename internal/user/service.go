@@ -43,15 +43,15 @@ func (s *UserService) GetUser(ctx context.Context, userId string) (*User, error)
 	return user, err
 }
 
-func (s *UserService) VerifyUserToken(token string) (string, error) {
+func (s *UserService) VerifyUserToken(token string) (*UserClaims, error) {
 
 	claims := &UserClaims{}
 
 	if err := s.tokenFactory.GetClaims(token, claims); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return claims.UserId, nil
+	return claims, nil
 }
 
 // Delete a user by its Id
