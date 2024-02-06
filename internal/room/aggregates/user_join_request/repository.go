@@ -3,7 +3,10 @@ package roomaggregates
 import (
 	"anshulbansal02/scribbly/internal/repository"
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type UserJoinRequestRepository struct {
@@ -25,8 +28,12 @@ func (r *UserJoinRequestRepository) CreateJoinRequest(ctx context.Context, userI
 func (r *UserJoinRequestRepository) GetUserJoinRequestedRoom(ctx context.Context, userId string) (string, error) {
 	roomId, err := r.Rdb.HGet(ctx, joinRequestsKey, userId).Result()
 	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return "", nil
+		}
 		return "", r.error(err)
 	}
+
 	return roomId, nil
 }
 

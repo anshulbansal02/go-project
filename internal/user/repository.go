@@ -79,7 +79,6 @@ func (r *UserRepository) GetUsers(ctx context.Context, userIds []string) ([]*Use
 // Get a user by ID
 func (r *UserRepository) GetUser(ctx context.Context, userId string) (*User, error) {
 	u, err := r.Rdb.Get(ctx, getNamespaceKey(userId)).Result()
-
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, r.error(ErrUserNotFound)

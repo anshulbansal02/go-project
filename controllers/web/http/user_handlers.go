@@ -2,7 +2,6 @@ package web
 
 import (
 	"anshulbansal02/scribbly/internal/user"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -50,7 +49,6 @@ func (h *userHttpControllers) Routes() chi.Router {
 		user, err := h.userService.GetUser(r.Context(), userId)
 
 		if err != nil {
-			fmt.Println(err)
 			h.JSON(w, http.StatusNotFound, err)
 			return
 		}

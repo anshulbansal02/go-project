@@ -51,7 +51,10 @@ func (r *RoomRepository) SaveRoom(ctx context.Context, room *Room) error {
 func (r *RoomRepository) GetRoom(ctx context.Context, roomId string) (*Room, error) {
 	k, err := r.Rdb.Get(ctx, GetNamespaceKey(roomId)).Result()
 	if err != nil {
-		return nil, r.error(ErrRoomNotFound)
+		if errors.Is(err, redis.Nil) {
+			return nil, r.error(ErrRoomNotFound)
+		}
+		return nil, r.error(err)
 	}
 
 	room := &Room{}

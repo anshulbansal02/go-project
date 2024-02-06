@@ -16,6 +16,8 @@ func NewService(
 	roomRepo *RoomRepository,
 	userRoomRelationRepo *aggUserRoom.UserRoomRelationRepository,
 	joinRequestsRepo *aggJoinRequest.UserJoinRequestRepository,
+
+	roomCodeIdMap *RoomCodeIdMapRepository,
 ) *RoomService {
 	return &RoomService{
 		roomRepo:             roomRepo,
@@ -23,6 +25,8 @@ func NewService(
 		joinRequestsRepo:     joinRequestsRepo,
 
 		UserEventsChannel: make(chan UserEvent),
+
+		roomCodeIdMap: roomCodeIdMap,
 	}
 }
 
@@ -34,6 +38,7 @@ func SetupConcreteService(repository repository.Repository) *RoomService {
 	roomService := NewService(NewRepository(repository),
 		aggUserRoom.NewUserRoomRelation(repository),
 		aggJoinRequest.NewUserJoinRequestRepository(repository),
+		&RoomCodeIdMapRepository{Repository: repository},
 	)
 
 	return roomService

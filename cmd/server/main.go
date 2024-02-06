@@ -46,8 +46,9 @@ func main() {
 	rootRouter.HandleFunc("/client", wsManager.HandleWSConnection)
 
 	// Events Exchange Setup
-	exchange.NewRoomEventsExchange(roomService, wsManager).Listen()
-	exchange.NewUserEventsExchange(userService, wsManager).Listen()
+	clientMap := exchange.NewClientMap()
+	exchange.NewRoomEventsExchange(roomService, wsManager, clientMap).Listen()
+	exchange.NewUserEventsExchange(userService, wsManager, clientMap).Listen()
 
 	http.ListenAndServe(":5000", rootRouter)
 

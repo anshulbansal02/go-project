@@ -35,9 +35,13 @@ func getObserverSlotKey(client *Client, event *Event) string {
 
 	if client == nil {
 		key1 = "*"
+	} else {
+		key1 = client.ID
 	}
 	if event == nil {
 		key2 = "*"
+	} else {
+		key2 = string(*event)
 	}
 
 	return fmt.Sprintf("%v$%v", key1, key2)
@@ -45,6 +49,7 @@ func getObserverSlotKey(client *Client, event *Event) string {
 
 // Registers an observer for given client and event and returns an observerId for later removal
 func (h *Hub) AddObserver(client *Client, event *Event, observer Observer) string {
+
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 

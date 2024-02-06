@@ -5,9 +5,6 @@ import (
 	aggUserRoom "anshulbansal02/scribbly/internal/room/aggregates/user_room_relation"
 	"anshulbansal02/scribbly/internal/user"
 	"context"
-	"errors"
-
-	"github.com/redis/go-redis/v9"
 )
 
 type DependingServices struct {
@@ -22,6 +19,8 @@ type RoomService struct {
 	DependingServices
 
 	UserEventsChannel chan UserEvent
+
+	roomCodeIdMap *RoomCodeIdMapRepository
 }
 
 /********************** Service Methods **********************/
@@ -35,12 +34,18 @@ func (s *RoomService) CreatePrivateRoom(ctx context.Context, adminId string) (*R
 		return nil, user.ErrUserNotFound
 	}
 
-	_, err = s.userRoomRelationRepo.GetRoomIdByUserId(ctx, adminId)
-	if !errors.Is(err, redis.Nil) {
+	uId, err := s.userRoomRelationRepo.GetRoomIdByUserId(ctx, adminId)
+	if err != nil {
+		return nil, err
+	} else if uId != "" {
 		return nil, ErrUserAlreadyInRoom
 	}
 
 	room := s.roomRepo.NewRoom(&adminId, "private")
+
+	if err := s.roomCodeIdMap.Set(ctx, room.Code, room.ID); err != nil {
+		return nil, err
+	}
 
 	if err := s.roomRepo.SaveRoom(ctx, room); err != nil {
 		return nil, err
@@ -51,6 +56,10 @@ func (s *RoomService) CreatePrivateRoom(ctx context.Context, adminId string) (*R
 
 func (s *RoomService) CreatePublicRoom(ctx context.Context) (*Room, error) {
 	room := s.roomRepo.NewRoom(nil, "public")
+
+	if err := s.roomCodeIdMap.Set(ctx, room.Code, room.ID); err != nil {
+		return nil, err
+	}
 
 	if err := s.roomRepo.SaveRoom(ctx, room); err != nil {
 		return nil, err
@@ -93,7 +102,12 @@ func (s *RoomService) GetRoomAdmin(ctx context.Context, roomId string) *string {
 	return room.Admin
 }
 
-func (s *RoomService) CreateJoinRequest(ctx context.Context, roomId string, userId string) error {
+func (s *RoomService) CreateJoinRequest(ctx context.Context, roomCode string, userId string) error {
+	roomId, err := s.roomCodeIdMap.GetRoomId(ctx, roomCode)
+	if err != nil {
+		return err
+	}
+
 	defer s.roomRepo.KeyMutex.Lock(roomId)()
 
 	// Check if room exists
@@ -109,8 +123,7 @@ func (s *RoomService) CreateJoinRequest(ctx context.Context, roomId string, user
 	rId, err := s.userRoomRelationRepo.GetRoomIdByUserId(ctx, userId)
 	if err != nil {
 		return err
-	}
-	if rId != "" {
+	} else if rId != "" {
 		return ErrUserAlreadyInRoom
 	}
 

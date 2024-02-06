@@ -1,3 +1,3 @@
 package roomaggregates
 
-const joinRequestsKey = "relation:user->room:join_requests"
+const joinRequestsKey = "rel:user->room:join_requests"

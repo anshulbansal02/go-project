@@ -77,7 +77,7 @@ func (m *WebSocketManager) RemoveObserver(observerId string) {
 }
 
 func (m *WebSocketManager) GetClient(clientId string) *Client {
-	return m.clientPool.clients[clientId]
+	return m.clientPool.get(clientId)
 }
 
 func (m *WebSocketManager) EmitTo(clientId string, message OutgoingWebSocketMessage) {

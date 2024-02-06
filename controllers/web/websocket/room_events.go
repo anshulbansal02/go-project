@@ -13,11 +13,11 @@ type RoomEventsExchange struct {
 	clientMap   *ClientMap
 }
 
-func NewRoomEventsExchange(roomService *room.RoomService, wsManager *websockets.WebSocketManager) *RoomEventsExchange {
+func NewRoomEventsExchange(roomService *room.RoomService, wsManager *websockets.WebSocketManager, clientMap *ClientMap) *RoomEventsExchange {
 	return &RoomEventsExchange{
 		roomService: roomService,
 		wsManager:   wsManager,
-		clientMap:   NewClientMap(),
+		clientMap:   clientMap,
 	}
 }
 

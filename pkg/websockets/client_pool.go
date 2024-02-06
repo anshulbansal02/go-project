@@ -21,3 +21,11 @@ func (cp *clientPool) remove(c *Client) {
 	defer cp.mu.Unlock()
 	delete(cp.clients, c.ID)
 }
+
+func (cp *clientPool) get(cId string) *Client {
+	cp.mu.RLock()
+	defer cp.mu.RUnlock()
+
+	client := cp.clients[cId]
+	return client
+}

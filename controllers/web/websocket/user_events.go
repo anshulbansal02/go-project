@@ -13,11 +13,11 @@ type UserEventsExchange struct {
 	clientMap   *ClientMap
 }
 
-func NewUserEventsExchange(userService *user.UserService, wsManager *websockets.WebSocketManager) *UserEventsExchange {
+func NewUserEventsExchange(userService *user.UserService, wsManager *websockets.WebSocketManager, clientMap *ClientMap) *UserEventsExchange {
 	return &UserEventsExchange{
 		userService: userService,
 		wsManager:   wsManager,
-		clientMap:   NewClientMap(),
+		clientMap:   clientMap,
 	}
 }
 

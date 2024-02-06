@@ -5,7 +5,6 @@ import (
 	"anshulbansal02/scribbly/internal/room"
 	"anshulbansal02/scribbly/internal/user"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -38,7 +37,6 @@ func (h *roomHttpControllers) Routes() chi.Router {
 		}
 
 		room, err := h.roomService.CreatePrivateRoom(r.Context(), body.AdminId)
-		fmt.Println(err)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
 				h.JSON(w, http.StatusBadRequest, err.Error())
@@ -62,8 +60,8 @@ func (h *roomHttpControllers) Routes() chi.Router {
 		h.JSON(w, http.StatusOK, room)
 	})
 
-	h.router.Post("/join/{roomId}", middlewares.WithAuthorization(func(w http.ResponseWriter, r *http.Request) {
-		roomId := chi.URLParam(r, "roomId")
+	h.router.Post("/join/{code}", middlewares.WithAuthorization(func(w http.ResponseWriter, r *http.Request) {
+		roomId := chi.URLParam(r, "code")
 
 		user := r.Context().Value(middlewares.UserCtxKey).(middlewares.UserAuthContext)
 

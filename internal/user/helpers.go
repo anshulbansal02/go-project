@@ -10,7 +10,7 @@ import (
 var generateUserId = utils.NewRandomStringGenerator(utils.CHARSET_URL_SAFE, 12)
 
 func getNamespaceKey(userId string) string {
-	return fmt.Sprintf("entity:user:%v", userId)
+	return fmt.Sprintf("ent:user:%v", userId)
 }
 
 type UserClaims struct {

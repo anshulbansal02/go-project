@@ -3,9 +3,9 @@ package roomaggregates
 import "fmt"
 
 func getUserToRoomRelationKey() string {
-	return "relation:user->room"
+	return "rel:user->room"
 }
 
 func getRoomToUsersRelationKey(roomId string) string {
-	return fmt.Sprintf("relation:room->users:%v", roomId)
+	return fmt.Sprintf("rel:room->users:%v", roomId)
 }
