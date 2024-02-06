@@ -1,6 +1,7 @@
 package web
 
 import (
+	"anshulbansal02/scribbly/controllers/middlewares"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -27,4 +28,8 @@ func (h *BaseHandler) DecodeBodyTo(r *http.Request, v any) error {
 	err := json.NewDecoder(r.Body).Decode(v)
 
 	return err
+}
+
+func (h *BaseHandler) GetAuthUser(r *http.Request) middlewares.UserAuthContext {
+	return r.Context().Value(middlewares.UserCtxKey).(middlewares.UserAuthContext)
 }

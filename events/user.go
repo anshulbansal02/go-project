@@ -11,5 +11,5 @@ var User = struct {
 }
 
 type AssociateClientData struct {
-	UserSecret string
+	UserSecret string `msgpack:"userSecret"`
 }

@@ -19,6 +19,7 @@ func (m *UserRoomRelationRepository) error(err error) error {
 
 func (r *UserRoomRelationRepository) GetRoomIdByUserId(ctx context.Context, userId string) (string, error) {
 	roomId, err := r.Rdb.HGet(ctx, getUserToRoomRelationKey(), userId).Result()
+
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return "", nil

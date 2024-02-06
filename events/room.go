@@ -8,17 +8,18 @@ var Room = struct {
 	UserJoined        websockets.Event
 	UserLeft          websockets.Event
 }{
-	JoinRequest:       "join_request",
-	CancelJoinRequest: "cancel_join_request",
-	UserJoined:        "user_joined",
-	UserLeft:          "user_left",
+	JoinRequest: "join_request",
+	UserJoined:  "user_joined",
+	UserLeft:    "user_left",
 }
 
 type RequestData struct {
-	UserId string
+	Type   string `msgpack:"type"`
+	UserId string `msgpack:"userId"`
+	RoomId string `msgpack:"roomId"`
 }
 
 type RoomUserData struct {
-	RoomId string
-	UserId string
+	RoomId string `msgpack:"roomId"`
+	UserId string `msgpack:"userId"`
 }

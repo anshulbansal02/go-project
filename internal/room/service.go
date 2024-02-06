@@ -47,6 +47,10 @@ func (s *RoomService) CreatePrivateRoom(ctx context.Context, adminId string) (*R
 		return nil, err
 	}
 
+	if err := s.userRoomRelationRepo.AddUserToRoom(ctx, room.ID, adminId); err != nil {
+		return nil, err
+	}
+
 	if err := s.roomRepo.SaveRoom(ctx, room); err != nil {
 		return nil, err
 	}
@@ -98,7 +102,9 @@ func (s *RoomService) DeleteRoom(ctx context.Context, roomId string) error {
 
 func (s *RoomService) GetRoomAdmin(ctx context.Context, roomId string) *string {
 	room, _ := s.roomRepo.GetRoom(ctx, roomId)
-
+	if room == nil {
+		return nil
+	}
 	return room.Admin
 }
 
@@ -212,4 +218,9 @@ func (s *RoomService) AcceptJoinRequest(ctx context.Context, userId string) erro
 	}
 
 	return nil
+}
+
+func (s *RoomService) GetUserRoomId(ctx context.Context, userId string) (string, error) {
+	roomId, err := s.userRoomRelationRepo.GetRoomIdByUserId(ctx, userId)
+	return roomId, err
 }

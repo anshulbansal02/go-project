@@ -47,13 +47,19 @@ func (h *userHttpControllers) Routes() chi.Router {
 		userId := chi.URLParam(r, "userId")
 
 		user, err := h.userService.GetUser(r.Context(), userId)
-
 		if err != nil {
 			h.JSON(w, http.StatusNotFound, err)
 			return
 		}
 
-		h.JSON(w, http.StatusOK, user)
+		authUser := h.GetAuthUser(r)
+
+		if authUser.UserId != userId {
+			h.JSON(w, http.StatusOK, user.Public())
+		} else {
+			h.JSON(w, http.StatusOK, user)
+		}
+
 	})
 
 	// @GET /list/<userIds> - Get user info by id
