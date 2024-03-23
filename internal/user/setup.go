@@ -1,7 +1,7 @@
 package user
 
 import (
-	"anshulbansal02/scribbly/internal/repository"
+	"anshulbansal02/scribbly/pkg/repository"
 	tokenfactory "anshulbansal02/scribbly/pkg/token_factory"
 
 	"github.com/golang-jwt/jwt/v5"

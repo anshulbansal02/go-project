@@ -20,7 +20,9 @@ func SetupHealthcheckHttpControllers() *healthcheckHttpControllers {
 func (h *healthcheckHttpControllers) Routes() chi.Router {
 
 	h.router.Get("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-		h.JSON(w, http.StatusOK, "Working")
+		h.JSON(w, http.StatusOK, map[string]string{
+			"message": "Working",
+		})
 	})
 
 	return h.router

@@ -1,6 +1,6 @@
 package roomaggregates
 
-import "anshulbansal02/scribbly/internal/repository"
+import "anshulbansal02/scribbly/pkg/repository"
 
 func NewUserRoomRelation(repository repository.Repository) *UserRoomRelationRepository {
 	return &UserRoomRelationRepository{

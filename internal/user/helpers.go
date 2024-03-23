@@ -2,6 +2,7 @@ package user
 
 import (
 	"anshulbansal02/scribbly/pkg/utils"
+
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"

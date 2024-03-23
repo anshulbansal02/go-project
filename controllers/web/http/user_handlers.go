@@ -2,6 +2,7 @@ package web
 
 import (
 	"anshulbansal02/scribbly/internal/user"
+
 	"net/http"
 	"strings"
 
@@ -65,10 +66,9 @@ func (h *userHttpControllers) Routes() chi.Router {
 	// @GET /list/<userIds> - Get user info by id
 	h.router.Get("/list", func(w http.ResponseWriter, r *http.Request) {
 
-		userIds := strings.Split(r.URL.Query().Get("userIds[]"), ",")
+		userIds := strings.Split(r.URL.Query().Get("userIds"), ",")
 
 		users, err := h.userService.GetUsers(r.Context(), userIds)
-
 		if err != nil {
 			h.JSON(w, http.StatusInternalServerError, err)
 			return

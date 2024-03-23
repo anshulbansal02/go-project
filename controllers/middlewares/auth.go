@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"anshulbansal02/scribbly/internal/user"
+
 	"context"
 	"net/http"
 	"strings"

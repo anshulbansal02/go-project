@@ -2,6 +2,7 @@ package websockets
 
 import (
 	"anshulbansal02/scribbly/pkg/utils"
+
 	"fmt"
 	"net/http"
 	"slices"

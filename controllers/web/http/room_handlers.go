@@ -4,6 +4,7 @@ import (
 	"anshulbansal02/scribbly/controllers/middlewares"
 	"anshulbansal02/scribbly/internal/room"
 	"anshulbansal02/scribbly/internal/user"
+
 	"errors"
 	"net/http"
 

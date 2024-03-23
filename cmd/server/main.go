@@ -4,10 +4,12 @@ import (
 	"anshulbansal02/scribbly/controllers/middlewares"
 	web "anshulbansal02/scribbly/controllers/web/http"
 	exchange "anshulbansal02/scribbly/controllers/web/websocket"
-	"anshulbansal02/scribbly/internal/repository"
+	"anshulbansal02/scribbly/internal/chat"
 	"anshulbansal02/scribbly/internal/room"
 	"anshulbansal02/scribbly/internal/user"
+	"anshulbansal02/scribbly/pkg/repository"
 	"anshulbansal02/scribbly/pkg/websockets"
+
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -34,6 +36,7 @@ func main() {
 	roomService.SetDependencies(room.DependingServices{
 		UserService: userService,
 	})
+	chatService := chat.SetupConcreteService(*repository)
 
 	rootRouter.Use(middlewares.Authenticate(userService))
 	rootRouter.Use(middlewares.Cors)
@@ -49,6 +52,7 @@ func main() {
 	clientMap := exchange.NewClientMap()
 	exchange.NewRoomEventsExchange(roomService, wsManager, clientMap).Listen()
 	exchange.NewUserEventsExchange(userService, wsManager, clientMap).Listen()
+	exchange.NewChatEventsExchange(chatService, wsManager, clientMap).Listen()
 
 	http.ListenAndServe(":5000", rootRouter)
 

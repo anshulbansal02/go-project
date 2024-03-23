@@ -1,7 +1,7 @@
 package roomaggregates
 
 import (
-	"anshulbansal02/scribbly/internal/repository"
+	"anshulbansal02/scribbly/pkg/repository"
 	"context"
 	"errors"
 	"fmt"

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"anshulbansal02/scribbly/internal/repository"
+	"anshulbansal02/scribbly/pkg/repository"
 	"anshulbansal02/scribbly/pkg/utils"
 
 	"context"

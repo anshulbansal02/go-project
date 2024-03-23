@@ -4,6 +4,7 @@ import (
 	"anshulbansal02/scribbly/events"
 	"anshulbansal02/scribbly/internal/room"
 	"anshulbansal02/scribbly/pkg/websockets"
+
 	"context"
 )
 
@@ -22,9 +23,8 @@ func NewRoomEventsExchange(roomService *room.RoomService, wsManager *websockets.
 }
 
 func (e *RoomEventsExchange) Listen() {
-
 	// Handle Events from Internal channel
-	handleInternalUserRoomEvents := func() {
+	go func() {
 		for {
 			event := <-e.roomService.UserEventsChannel
 
@@ -40,20 +40,15 @@ func (e *RoomEventsExchange) Listen() {
 			case room.UserLeftEvent:
 				go e.handleIE_UserLeft(event.UserId, event.RoomId)
 			}
-
 		}
+	}()
 
-	}
-
-	// Handle Events from clients
-	e.wsManager.AddObserver(events.Room.JoinRequest, e.handleCE_RespondToRequest)
-
-	go handleInternalUserRoomEvents()
+	// Handle Events from Clients
+	e.wsManager.AddObserver(events.Room.JoinRequest, e.handleCE_ActionOnRequest)
 
 }
 
-// System Event Handlers
-
+// [Internal Event] - New user Join Request for a room
 func (e *RoomEventsExchange) handleIE_JoinRequest(userId, roomId string) {
 	adminId := e.roomService.GetRoomAdmin(context.Background(), roomId)
 
@@ -68,6 +63,7 @@ func (e *RoomEventsExchange) handleIE_JoinRequest(userId, roomId string) {
 	}
 }
 
+// [Internal Event] - Cancel user Join Request for a room
 func (e *RoomEventsExchange) handleIE_CancelRequest(userId, roomId string) {
 	adminId := e.roomService.GetRoomAdmin(context.Background(), roomId)
 
@@ -82,6 +78,7 @@ func (e *RoomEventsExchange) handleIE_CancelRequest(userId, roomId string) {
 	}
 }
 
+// [Internal Event] - Reject user Join Request for a room
 func (e *RoomEventsExchange) handleIE_RejectRequest(userId, roomId string) {
 	clientId, ok := e.clientMap.GetClientId(userId)
 	if ok {
@@ -91,19 +88,7 @@ func (e *RoomEventsExchange) handleIE_RejectRequest(userId, roomId string) {
 	}
 }
 
-func (e *RoomEventsExchange) handleIE_UserLeft(userId, roomId string) {
-	userIds, err := e.roomService.GetRoomUsers(context.Background(), roomId)
-	if err != nil {
-		return
-	}
-
-	clientIds := e.clientMap.GetClientIds(userIds)
-
-	e.wsManager.Multicast(clientIds, []string{userId}, websockets.NewNotification(events.Room.UserLeft, events.RoomUserData{
-		UserId: userId,
-	}))
-}
-
+// [Internal Event] - User Join Request was accepted and user joined a room
 func (e *RoomEventsExchange) handleIE_UserJoined(userId, roomId string) {
 	userIds, err := e.roomService.GetRoomUsers(context.Background(), roomId)
 	if err != nil {
@@ -124,9 +109,22 @@ func (e *RoomEventsExchange) handleIE_UserJoined(userId, roomId string) {
 	}))
 }
 
-// Client Event Handlers
+// [Internal Event] - User left a room
+func (e *RoomEventsExchange) handleIE_UserLeft(userId, roomId string) {
+	userIds, err := e.roomService.GetRoomUsers(context.Background(), roomId)
+	if err != nil {
+		return
+	}
 
-func (e *RoomEventsExchange) handleCE_RespondToRequest(message websockets.IncomingWebSocketMessage, client *websockets.Client) {
+	clientIds := e.clientMap.GetClientIds(userIds)
+
+	e.wsManager.Multicast(clientIds, []string{userId}, websockets.NewNotification(events.Room.UserLeft, events.RoomUserData{
+		UserId: userId,
+	}))
+}
+
+// [Client Event] - There was an action on Join Request either by Admin or by Requestor
+func (e *RoomEventsExchange) handleCE_ActionOnRequest(message websockets.IncomingWebSocketMessage, client *websockets.Client) {
 	data := events.RequestData{}
 	if err := message.Payload.Assert(&data); err != nil {
 		return

@@ -2,6 +2,7 @@ package web
 
 import (
 	"anshulbansal02/scribbly/controllers/middlewares"
+
 	"encoding/json"
 	"fmt"
 	"net/http"
