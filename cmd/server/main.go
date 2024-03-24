@@ -54,6 +54,6 @@ func main() {
 	exchange.NewUserEventsExchange(userService, wsManager, clientMap).Listen()
 	exchange.NewChatEventsExchange(chatService, wsManager, clientMap).Listen()
 
-	http.ListenAndServe(":5000", rootRouter)
+	http.ListenAndServe("localhost:5000", rootRouter)
 
 }

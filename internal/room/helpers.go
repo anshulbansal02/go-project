@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-var generateRoomId = utils.NewRandomStringGenerator(utils.CHARSET_URL_SAFE, 8)
+var generateRoomId = utils.NewRandomStringGenerator(utils.CHARSET_URL_SAFE, 12)
 var generateRoomCode = utils.NewRandomStringGenerator(utils.CHARSET_ALPHA_UPPER+utils.CHARSET_NUM, 6)
 
 func GetNamespaceKey(roomId string) string {

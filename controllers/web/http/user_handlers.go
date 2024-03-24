@@ -63,7 +63,7 @@ func (h *userHttpControllers) Routes() chi.Router {
 
 	})
 
-	// @GET /list/<userIds> - Get user info by id
+	// @GET /list/<userIds> - Get users
 	h.router.Get("/list", func(w http.ResponseWriter, r *http.Request) {
 
 		userIds := strings.Split(r.URL.Query().Get("userIds"), ",")

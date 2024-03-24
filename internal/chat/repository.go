@@ -21,10 +21,11 @@ func (r *ChatRepository) error(err error) error {
 	return fmt.Errorf("chat repository: %w", err)
 }
 
-func (r *ChatRepository) NewMessage(content string, userId string, conversationId string) *ChatMessage {
+func (r *ChatRepository) NewMessage(content string, meta map[string]any, userId string, conversationId string) *ChatMessage {
 	return &ChatMessage{
-		ID:             generateChatId(),
+		ID:             generateChatId(conversationId),
 		Content:        content,
+		Meta:           meta,
 		UserId:         userId,
 		Timestamp:      time.Now(),
 		ConversationId: conversationId,
@@ -37,7 +38,7 @@ func (r *ChatRepository) SaveMessage(ctx context.Context, msg *ChatMessage) erro
 		return r.error(err)
 	}
 
-	err = r.Rdb.Set(ctx, getNamespaceKey(msg.ID), m, 0).Err()
+	err = r.Rdb.RPush(ctx, getNamespaceKey(msg.ConversationId), m, 0).Err()
 	if err != nil {
 		return r.error(err)
 	}

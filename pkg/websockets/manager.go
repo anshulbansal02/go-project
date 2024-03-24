@@ -59,7 +59,7 @@ func (m *WebSocketManager) HandleWSConnection(w http.ResponseWriter, r *http.Req
 }
 
 // Process a single client websocket emitted message
-func (m *WebSocketManager) processMessage(client *Client, mt int, msg []byte) {
+func (m *WebSocketManager) processMessage(client *Client, _ int, msg []byte) {
 	message, err := DecodeMessage(msg)
 	if err != nil {
 		fmt.Println("Error decoding message: ", err)

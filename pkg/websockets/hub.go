@@ -91,7 +91,7 @@ func (h *Hub) RemoveObserver(observerId string) bool {
 	}
 
 	observers[removalIndex] = observers[len(observers)-1]
-	observers = observers[:len(observers)-1]
+	h.observers[key] = observers[:len(observers)-1]
 
 	return true
 }
@@ -101,7 +101,7 @@ func (h *Hub) RemoveObserversForClient(client *Client) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	for key, _ := range h.observers {
+	for key := range h.observers {
 		if strings.HasPrefix(key, client.ID) {
 			delete(h.observers, key)
 		}
@@ -120,7 +120,7 @@ func (h *Hub) RemoveObserversForEvent(event Event) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	for key, _ := range h.observers {
+	for key := range h.observers {
 		if strings.HasPrefix(key, string(event)) {
 			delete(h.observers, key)
 		}

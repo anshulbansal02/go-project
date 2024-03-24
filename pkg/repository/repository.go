@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -24,3 +26,5 @@ func New(config *Config) *Repository {
 
 	return &Repository{Rdb: redisClient}
 }
+
+var ErrEntityNotFound = errors.New("entity not found")

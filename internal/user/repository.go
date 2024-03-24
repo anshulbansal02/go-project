@@ -49,13 +49,13 @@ func (r *UserRepository) SaveUser(ctx context.Context, user *User) error {
 
 func (r *UserRepository) GetUsers(ctx context.Context, userIds []string) ([]*User, error) {
 
-	namespacedIds := utils.MapFunc[string, string](userIds, func(id string) string {
+	namespacedIds := utils.MapFunc(userIds, func(id string) string {
 		return getNamespaceKey(id)
 	})
 
 	u, err := r.Rdb.MGet(ctx, namespacedIds...).Result()
 	if err != nil {
-		return nil, r.error(err)
+		return nil, r.error(repository.ErrEntityNotFound)
 	}
 
 	users := []*User{}
@@ -81,7 +81,7 @@ func (r *UserRepository) GetUser(ctx context.Context, userId string) (*User, err
 	u, err := r.Rdb.Get(ctx, getNamespaceKey(userId)).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, r.error(ErrUserNotFound)
+			return nil, r.error(repository.ErrEntityNotFound)
 		}
 		return nil, r.error(err)
 	}

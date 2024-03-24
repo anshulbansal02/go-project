@@ -53,7 +53,7 @@ func (r *RoomRepository) GetRoom(ctx context.Context, roomId string) (*Room, err
 	k, err := r.Rdb.Get(ctx, GetNamespaceKey(roomId)).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, r.error(ErrRoomNotFound)
+			return nil, r.error(repository.ErrEntityNotFound)
 		}
 		return nil, r.error(err)
 	}

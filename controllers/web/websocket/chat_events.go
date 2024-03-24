@@ -30,16 +30,42 @@ func (e *ChatEventsExchange) Listen() {
 		for {
 			msg := <-e.chatService.ChatMessageChannel
 
-			userIds, err := e.roomService.GetRoomUsers(context.Background(), msg.ConversationId)
-			if err != nil {
-				return
-			}
-
-			clientIds := e.clientMap.GetClientIds(userIds)
-
-			e.wsManager.Multicast(clientIds, nil, websockets.NewNotification(events.Chat.ChatMessage, msg))
-
+			e.handleIE_ChatMessage(msg)
 		}
 	}()
 
+	e.wsManager.AddObserver(events.Chat.ChatMessage, e.handleCE_ChatMessage)
+
+}
+
+func (e *ChatEventsExchange) handleIE_ChatMessage(msg *chat.ChatMessage) {
+	userIds, err := e.roomService.GetRoomUsers(context.Background(), msg.ConversationId)
+	if err != nil {
+		return
+	}
+
+	clientIds := e.clientMap.GetClientIds(userIds)
+	e.wsManager.Multicast(clientIds, nil, websockets.NewNotification(events.Chat.ChatMessage, msg))
+}
+
+func (e *ChatEventsExchange) handleCE_ChatMessage(message websockets.IncomingWebSocketMessage, client *websockets.Client) {
+
+	data := events.ChatMessageData{}
+	if err := message.Payload.Assert(&data); err != nil {
+		return
+	}
+
+	ctx := context.Background()
+
+	userId, exists := e.clientMap.GetUserId(client.ID)
+	if !exists {
+		return
+	}
+
+	roomId, err := e.roomService.GetUserRoomId(ctx, userId)
+	if err != nil {
+		return
+	}
+
+	e.chatService.CreateMessage(ctx, data.Content, data.Meta, userId, roomId)
 }

@@ -29,7 +29,7 @@ func (r *UserJoinRequestRepository) GetUserJoinRequestedRoom(ctx context.Context
 	roomId, err := r.Rdb.HGet(ctx, joinRequestsKey, userId).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", nil
+			return "", r.error(repository.ErrEntityNotFound)
 		}
 		return "", r.error(err)
 	}
