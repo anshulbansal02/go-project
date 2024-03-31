@@ -12,7 +12,7 @@ type ChatService struct {
 
 type Pipe = func(ChatMessage) ChatMessage
 
-func (s *ChatService) RegisterPipe(ctx context.Context, pipe Pipe) {
+func (s *ChatService) RegisterPipe(pipe Pipe) {
 	s.chatMessagePipes = append(s.chatMessagePipes, pipe)
 }
 
@@ -24,6 +24,8 @@ func (s *ChatService) CreateMessage(ctx context.Context, content string, meta ma
 	if err != nil {
 		return nil, err
 	}
+
+	s.ChatMessageChannel <- msg
 
 	return msg, nil
 }

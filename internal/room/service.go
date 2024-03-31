@@ -4,6 +4,8 @@ import (
 	aggJoinRequest "anshulbansal02/scribbly/internal/room/aggregates/user_join_request"
 	aggUserRoom "anshulbansal02/scribbly/internal/room/aggregates/user_room_relation"
 	"anshulbansal02/scribbly/internal/user"
+	"anshulbansal02/scribbly/pkg/repository"
+	"errors"
 
 	"context"
 )
@@ -35,11 +37,13 @@ func (s *RoomService) CreatePrivateRoom(ctx context.Context, adminId string) (*R
 		return nil, user.ErrUserNotFound
 	}
 
-	uId, err := s.userRoomRelationRepo.GetRoomIdByUserId(ctx, adminId)
-	if err != nil {
-		return nil, err
-	} else if uId != "" {
+	_, err = s.userRoomRelationRepo.GetRoomIdByUserId(ctx, adminId)
+	if err == nil {
 		return nil, ErrUserAlreadyInRoom
+	} else {
+		if !errors.Is(err, repository.ErrEntityNotFound) {
+			return nil, err
+		}
 	}
 
 	room := s.roomRepo.NewRoom(&adminId, "private")
@@ -127,11 +131,14 @@ func (s *RoomService) CreateJoinRequest(ctx context.Context, roomCode string, us
 	}
 
 	// Check if user is not in any other room
-	rId, err := s.userRoomRelationRepo.GetRoomIdByUserId(ctx, userId)
-	if err != nil {
-		return err
-	} else if rId != "" {
+	_, err = s.userRoomRelationRepo.GetRoomIdByUserId(ctx, userId)
+
+	if err == nil {
 		return ErrUserAlreadyInRoom
+	} else {
+		if !errors.Is(err, repository.ErrEntityNotFound) {
+			return err
+		}
 	}
 
 	// Create new join request

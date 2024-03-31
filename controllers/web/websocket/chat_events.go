@@ -16,9 +16,10 @@ type ChatEventsExchange struct {
 	clientMap   *ClientMap
 }
 
-func NewChatEventsExchange(chatService *chat.ChatService, wsManager *websockets.WebSocketManager, clientMap *ClientMap) *ChatEventsExchange {
+func NewChatEventsExchange(chatService *chat.ChatService, roomService *room.RoomService, wsManager *websockets.WebSocketManager, clientMap *ClientMap) *ChatEventsExchange {
 	return &ChatEventsExchange{
 		chatService: chatService,
+		roomService: roomService,
 		wsManager:   wsManager,
 		clientMap:   clientMap,
 	}
@@ -45,12 +46,19 @@ func (e *ChatEventsExchange) handleIE_ChatMessage(msg *chat.ChatMessage) {
 	}
 
 	clientIds := e.clientMap.GetClientIds(userIds)
-	e.wsManager.Multicast(clientIds, nil, websockets.NewNotification(events.Chat.ChatMessage, msg))
+	e.wsManager.Multicast(clientIds, nil, websockets.NewNotification(events.Chat.ChatMessage, events.OutgoingChatMessageData{
+		ID:             msg.ID,
+		Content:        msg.Content,
+		Meta:           msg.Meta,
+		UserId:         msg.UserId,
+		Timestamp:      msg.Timestamp,
+		ConversationId: msg.ConversationId,
+	}))
 }
 
 func (e *ChatEventsExchange) handleCE_ChatMessage(message websockets.IncomingWebSocketMessage, client *websockets.Client) {
 
-	data := events.ChatMessageData{}
+	data := events.IncomingChatMessageData{}
 	if err := message.Payload.Assert(&data); err != nil {
 		return
 	}

@@ -24,7 +24,7 @@ func (m *RoomCodeIdMapRepository) GetRoomId(ctx context.Context, code string) (s
 	roomId, err := m.Rdb.HGet(ctx, roomCodeIdMapKey, code).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", nil
+			return "", m.error(repository.ErrEntityNotFound)
 		}
 		return "", m.error(err)
 	}

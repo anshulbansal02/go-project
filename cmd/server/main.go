@@ -52,7 +52,7 @@ func main() {
 	clientMap := exchange.NewClientMap()
 	exchange.NewRoomEventsExchange(roomService, wsManager, clientMap).Listen()
 	exchange.NewUserEventsExchange(userService, wsManager, clientMap).Listen()
-	exchange.NewChatEventsExchange(chatService, wsManager, clientMap).Listen()
+	exchange.NewChatEventsExchange(chatService, roomService, wsManager, clientMap).Listen()
 
 	http.ListenAndServe("localhost:5000", rootRouter)
 
